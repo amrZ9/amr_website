@@ -111,18 +111,7 @@ export function Header() {
           role="dialog"
           aria-modal="true"
           aria-label="Site navigation"
-          className="nav-panel is-open"
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 90,
-            background: "var(--sc-canvas)",
-            color: "var(--sc-ink)",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            padding: "clamp(24px, 5vw, 56px)",
-          }}
+          className="nav-panel is-open ac-nav-drawer"
         >
           <div
             style={{

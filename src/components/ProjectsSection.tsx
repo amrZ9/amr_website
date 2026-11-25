@@ -18,6 +18,16 @@ export function ProjectsSection() {
       className="projects-section wrap section-pad measure-content"
       data-sc-act="flow"
     >
+      <div className="ac-chapter-bar">
+        <div className="ac-chapter-bar-inner">
+          <span>
+            <span className="ac-chapter-index">03</span> / VENTURES &amp; PROJECTS
+          </span>
+          <span>CASE STUDIES</span>
+        </div>
+      </div>
+
+      <div data-ac-reveal="out">
       <div className="projects-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: "16px", flexWrap: "wrap" }}>
         <h2>
           Featured
@@ -54,16 +64,25 @@ export function ProjectsSection() {
       <p className="projects-intro">{profile.projectsIntro}</p>
 
       <div className="project-folder-grid">
-        {profile.projects.map((project) => {
+        {profile.projects.map((project, idx) => {
           const isOpen = activeId === project.id;
           return (
             <button
               key={project.id}
               type="button"
               data-folder-id={project.id}
+              data-ac-stagger="out"
               aria-expanded={isOpen}
               onClick={() => setActiveId(isOpen ? null : project.id)}
-              className={`project-folder${isOpen ? " is-open" : ""}`}
+              className={`project-folder ac-loupe${isOpen ? " is-open" : ""}`}
+              style={
+                {
+                  ["--ac-delay" as string]: `${idx * 75}ms`,
+                  ...(project.accent
+                    ? { ["--venture-accent" as string]: project.accent }
+                    : {}),
+                } as React.CSSProperties
+              }
             >
               <span className="folder-scene">
                 <span className="folder-back" />
@@ -96,7 +115,7 @@ export function ProjectsSection() {
       </div>
 
       {activeProject && (
-        <div className="project-details-panel">
+        <div key={activeProject.id} className="project-details-panel ac-panel-unfurl">
           <div
             className="project-panel-toolbar"
             style={{
@@ -134,6 +153,7 @@ export function ProjectsSection() {
           </div>
         </div>
       )}
+      </div>
     </section>
   );
 }

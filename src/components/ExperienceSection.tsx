@@ -73,7 +73,16 @@ export function ExperienceSection() {
       className="experience-section section-pad"
       data-sc-act="flow"
     >
-      <div className="wrap">
+      <div className="ac-chapter-bar">
+        <div className="wrap ac-chapter-bar-inner">
+          <span>
+            <span className="ac-chapter-index">04</span> / EXPERIENCE
+          </span>
+          <span>CAREER ROADMAP</span>
+        </div>
+      </div>
+
+      <div className="wrap" data-ac-reveal="out">
         <div className="experience-heading">
           <h2>{profile.experienceHeading}</h2>
           <p>
@@ -97,11 +106,13 @@ export function ExperienceSection() {
             <path className="journey-road-ink" d={road.d} pathLength={1} />
           </svg>
 
-          {profile.experience.map((item) => (
+          {profile.experience.map((item, idx) => (
             <article
               key={item.id}
               className={`journey-stop ${item.variant}`}
               aria-labelledby={`${item.id}-title`}
+              data-ac-stagger="out"
+              style={{ ["--ac-delay" as string]: `${idx * 100}ms` }}
             >
               <span className="journey-stop-marker" aria-hidden="true">
                 <span />

@@ -4,6 +4,8 @@ import React, { useEffect, useRef } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { profile } from "@/data/profile";
 import { WaveText } from "./WaveText";
+import { OrbitalHeroCanvas } from "./OrbitalHeroCanvas";
+import { MetricsStrip } from "./MetricsStrip";
 
 function buildCodePreview() {
   const varName =
@@ -304,14 +306,7 @@ export function HeroAbout() {
         data-sc-act="flow"
         data-hero-intro="pending"
       >
-        <div
-          className="glyph-background hero-code-background"
-          data-slot="glyph-background"
-          aria-hidden="true"
-        >
-          <pre className="glyph-code-fallback">{codeText}</pre>
-          <canvas />
-        </div>
+        <OrbitalHeroCanvas />
 
         <a
           href="#biography"
@@ -327,7 +322,7 @@ export function HeroAbout() {
           />
         </a>
 
-        <div className="hero-heading-composition">
+        <div className="hero-heading-composition ac-hero-halo">
           <h1
             ref={titleRef}
             className="hero-title hero-display-title"
@@ -406,7 +401,21 @@ export function HeroAbout() {
         </div>
       </div>
 
-      <div id="biography" className="biography wrap measure-content" data-sc-act="flow">
+      <div className="ac-chapter-bar">
+        <div className="wrap ac-chapter-bar-inner">
+          <span>
+            <span className="ac-chapter-index">01</span> / BIOGRAPHY
+          </span>
+          <span>FOUNDER &amp; GROWTH</span>
+        </div>
+      </div>
+
+      <div
+        id="biography"
+        className="biography wrap measure-content"
+        data-sc-act="flow"
+        data-ac-reveal="out"
+      >
         <div className="bio-introduction">
           <h2>
             Hi, I&apos;m
@@ -454,6 +463,7 @@ export function HeroAbout() {
           </div>
         </div>
       </div>
+      <MetricsStrip />
     </section>
   );
 }

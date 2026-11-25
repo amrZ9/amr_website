@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { profile } from "@/data/profile";
 import "./globals.css";
+import "./artcraft-motion.css";
 
 export const metadata: Metadata = {
   title: profile.meta.title,

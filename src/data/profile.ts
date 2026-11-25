@@ -35,6 +35,7 @@ export interface ArchitectureNode {
 
 export interface ProjectItem {
   id: string;
+  accent?: string;
   kind: "case-study" | "showcase";
   title: string;
   subtitle: string;
@@ -125,8 +126,8 @@ export const profile: ProfileData = {
   heroTitleLines: ["GROWTH", "STRATEGIST"],
   heroYear: "©2026",
   heroFocusTag: "/GROWTH · PRODUCT · FOUNDER",
-  portraitImage: "/bg.jpg",
-  portraitAlt: "Portrait of Amr Ahmed A.Aziz",
+  portraitImage: "/amr-portrait.jpg",
+  portraitAlt: "Black and white studio portrait of Amr Ahmed A.Aziz",
   currentRole: {
     label: "Currently at",
     company: "DAZU (Bright Creations)",
@@ -201,6 +202,7 @@ export const profile: ProfileData = {
   projects: [
     {
       id: "betychef",
+      accent: "#f59e0b",
       kind: "case-study",
       title: "BetyChef",
       subtitle: "Homemade food marketplace",
@@ -236,6 +238,7 @@ export const profile: ProfileData = {
     },
     {
       id: "dazu-growth",
+      accent: "#10b981",
       kind: "case-study",
       title: "DAZU Growth",
       subtitle: "Multi-line growth strategy",
@@ -264,6 +267,7 @@ export const profile: ProfileData = {
     },
     {
       id: "egy-v",
+      accent: "#d97706",
       kind: "case-study",
       title: "Egy-V",
       subtitle: "Egypt heritage ticketing",
@@ -297,6 +301,7 @@ export const profile: ProfileData = {
     },
     {
       id: "early-ventures",
+      accent: "#38bdf8",
       kind: "case-study",
       title: "Mal3ab & PLASEA",
       subtitle: "Early product leadership",

@@ -8,7 +8,16 @@ export function SkillsSection() {
       className="skills-section section-pad"
       data-sc-act="flow"
     >
-      <div className="wrap">
+      <div className="ac-chapter-bar">
+        <div className="wrap ac-chapter-bar-inner">
+          <span>
+            <span className="ac-chapter-index">02</span> / CAPABILITIES
+          </span>
+          <span>STRATEGY &amp; TOOLS</span>
+        </div>
+      </div>
+
+      <div className="wrap" data-ac-reveal="out">
         <div className="skills-heading">
           <h2>{profile.skillsHeading}</h2>
           <p>
@@ -22,11 +31,13 @@ export function SkillsSection() {
         </div>
 
         <div className="skills-specimens">
-          {profile.skills.map((group) => (
+          {profile.skills.map((group, idx) => (
             <article
               key={group.id}
-              className="skills-specimen"
+              className="skills-specimen ac-loupe"
               aria-labelledby={group.id}
+              data-ac-stagger="out"
+              style={{ ["--ac-delay" as string]: `${idx * 90}ms` }}
             >
               <h3 id={group.id}>{group.title}</h3>
               <p className="skills-specimen-note">{group.note}</p>

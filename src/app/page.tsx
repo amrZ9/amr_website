@@ -2,6 +2,7 @@ import React from "react";
 import { PortfolioShell } from "@/components/PortfolioShell";
 import { Header } from "@/components/Header";
 import { HeroAbout } from "@/components/HeroAbout";
+import { MarqueeRibbon } from "@/components/MarqueeRibbon";
 import { SkillsSection } from "@/components/SkillsSection";
 import { ProjectsSection } from "@/components/ProjectsSection";
 import { ExperienceSection } from "@/components/ExperienceSection";
@@ -17,6 +18,7 @@ export default function HomePage() {
       <Header />
       <main id="main">
         <HeroAbout />
+        <MarqueeRibbon />
         <SkillsSection />
         <ProjectsSection />
         <ExperienceSection />
