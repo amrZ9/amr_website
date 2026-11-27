@@ -301,7 +301,9 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           }
         });
 
-        // 2. Update walkers (strict sequential 1->32 rotation, alternating left<->right)
+        // 2. Update walkers with anti-overlap spacing & Lane-1 ambient clear-zone rule
+        const LANE_MIN_GAP = [64, 80, 94] as const;
+
         for (let i = 0; i < walkers.length; i++) {
           const wk = walkers[i];
           if (pausedRef.current) continue;
@@ -327,11 +329,59 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           }
 
           const laneCfg = LANES[wk.lane];
-          const targetVx = wk.dir * wk.def.speed * laneCfg.speedMult * wk.speedBoost;
+          let targetVx = wk.dir * wk.def.speed * laneCfg.speedMult * wk.speedBoost;
+
+          // Rule A (Lane 1 / second lane): Sync with ambient vignettes so nobody crowds the entrance
+          if (wk.lane === 1) {
+            const leftAmb = ambientSlots[0];
+            const rightAmb = ambientSlots[1];
+            const leftActive = leftAmb.timer >= 0.8 && leftAmb.timer <= 10.8;
+            const rightActive = rightAmb.timer >= 0.8 && rightAmb.timer <= 10.8;
+
+            // If waiting off-screen at an active ambient entrance, hold until the ambient exits/enters
+            if (wk.x < -40 && wk.dir === 1 && leftActive) {
+              targetVx = 0;
+            } else if (wk.x > w + 40 && wk.dir === -1 && rightActive) {
+              targetVx = 0;
+            } else if (wk.dir === -1 && leftActive && wk.x < w * 0.23 && wk.x > w * 0.14) {
+              // Don't walk onto the active left ambient—turn back smoothly
+              wk.dir = 1;
+              targetVx = wk.def.speed * laneCfg.speedMult;
+            } else if (wk.dir === 1 && rightActive && wk.x > w * 0.77 && wk.x < w * 0.86) {
+              // Don't walk onto the active right ambient—turn back smoothly
+              wk.dir = -1;
+              targetVx = -wk.def.speed * laneCfg.speedMult;
+            }
+          }
+
+          // Rule B: No one is allowed on top of another walker in the same lane
+          const minGap = LANE_MIN_GAP[wk.lane];
+          for (let j = 0; j < walkers.length; j++) {
+            if (i === j) continue;
+            const other = walkers[j];
+            if (other.lane !== wk.lane) continue;
+            const dx = other.x - wk.x;
+            const ahead = wk.dir === 1 ? dx > 0 && dx < minGap : dx < 0 && -dx < minGap;
+            if (ahead) {
+              if (other.dir === wk.dir && other.state === "walking") {
+                // Match slower walker's pace to keep polite spacing
+                const otherAbs = Math.abs(other.vx);
+                if (Math.abs(targetVx) > otherAbs) {
+                  targetVx = wk.dir * Math.max(8, otherAbs * 0.9);
+                }
+              } else {
+                // Gently ease down or step aside if blocked
+                targetVx *= 0.25;
+              }
+            }
+          }
+
           wk.vx += (targetVx - wk.vx) * Math.min(1, dt * 6);
           wk.x += wk.vx * dt;
           wk.flip = wk.dir < 0;
-          wk.phase += dt * (4.8 + wk.lane * 0.8) * wk.speedBoost;
+          if (Math.abs(wk.vx) > 3) {
+            wk.phase += dt * (4.8 + wk.lane * 0.8) * wk.speedBoost;
+          }
 
           // Exited off-screen? Replace with the next NPC in the 1->32 queue!
           if ((wk.dir === 1 && wk.x > w + 140) || (wk.dir === -1 && wk.x < -140)) {
@@ -420,12 +470,12 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         // 4. Draw Lane 0 (far back) & Lane 1 (midground) + Ambient Slots on backCanvas
         const drawWalker = (ctx: CanvasRenderingContext2D, wk: LiveWalker) => {
           const laneCfg = LANES[wk.lane];
-          const isMoving = wk.state === "walking";
+          const isMoving = wk.state === "walking" && Math.abs(wk.vx) > 4;
           const frameIdx =
             wk.imgs.length > 1
               ? isMoving
                 ? Math.floor(wk.phase * 0.85) % wk.imgs.length
-                : 1
+                : 0 // Straight-leg grounded standing stance when talking/stopped
               : 0;
           const img = wk.imgs[frameIdx];
           if (!img || !img.complete || !img.naturalWidth) return;
