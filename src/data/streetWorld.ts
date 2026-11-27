@@ -1,7 +1,7 @@
 export type NpcBehaviorType =
-  | "stroller"   // Walks across the street, occasionally pauses to look around or check phone
+  | "stroller"   // Walks across the street, occasionally pauses to look around
   | "customer"   // Walks to the foul cart, waits/chats there, then walks away
-  | "cruiser"    // Delivery scooter / jogger moving faster with occasional brief stop
+  | "cruiser"    // Jogger moving faster across the street
   | "ambient";   // Living street vignette (foul cart, oud player, newspaper reader)
 
 export interface PointOfInterest {
@@ -14,7 +14,7 @@ export interface NpcDefinition {
   id: string;
   name: string;
   behavior: NpcBehaviorType;
-  /** Supports 1 static frame now, or multi-frame walk-cycle arrays later */
+  /** 6-frame walk cycles for moving NPCs, or 1 frame for ambient vignettes */
   frames: string[];
   /** Base speed in px/sec (0 for ambient) */
   speed: number;
@@ -29,6 +29,12 @@ export interface NpcDefinition {
   /** Relative size multiplier */
   sizeScale?: number;
 }
+
+const walkFrames = (slug: string, count = 6) =>
+  Array.from(
+    { length: count },
+    (_, i) => `/footer/street/${slug}-${String(i + 1).padStart(2, "0")}.webp`
+  );
 
 export const STREET_POIS: Record<string, PointOfInterest> = {
   foulCart: { id: "foulCart", xRatio: 0.11, z: 0.36 },
@@ -80,74 +86,97 @@ export const STREET_NPCS: NpcDefinition[] = [
     id: "student-backpack",
     name: "Backpack Student",
     behavior: "customer",
-    frames: ["/footer/street/walk-01.webp"],
-    speed: 38,
+    frames: walkFrames("backpack-walk"),
+    speed: 30,
     zRange: [0.34, 0.52],
     homePoi: "foulQueue",
-    sizeScale: 0.92,
+    sizeScale: 0.95,
   },
   {
     id: "coffee-girl",
     name: "Coffee Walker",
     behavior: "customer",
-    frames: ["/footer/street/walk-04.webp"],
-    speed: 34,
+    frames: walkFrames("coffee-walk"),
+    speed: 28,
     zRange: [0.32, 0.48],
     homePoi: "foulQueue",
-    sizeScale: 0.9,
+    sizeScale: 0.94,
+  },
+  {
+    id: "apron-uncle",
+    name: "Cafe Uncle",
+    behavior: "customer",
+    frames: walkFrames("apron-walk"),
+    speed: 26,
+    zRange: [0.36, 0.50],
+    homePoi: "foulQueue",
+    sizeScale: 0.96,
   },
 
-  // --- Natural strollers (walk, pause, look around, continue) ---
+  // --- Natural strollers (6-frame walk cycles) ---
   {
-    id: "laptop-hijabi",
-    name: "Laptop Student",
+    id: "striped-girl",
+    name: "Tote Bag Stroller",
     behavior: "stroller",
-    frames: ["/footer/street/walk-02.webp"],
-    speed: 36,
-    zRange: [0.42, 0.62],
-    sizeScale: 0.88,
+    frames: walkFrames("striped-walk"),
+    speed: 30,
+    zRange: [0.48, 0.66],
+    sizeScale: 0.96,
   },
   {
-    id: "phone-guy",
-    name: "Phone Caller",
+    id: "hijabi-books",
+    name: "Student with Books",
     behavior: "stroller",
-    frames: ["/footer/street/walk-03.webp"],
-    speed: 32,
-    zRange: [0.26, 0.46],
-    sizeScale: 0.9,
+    frames: walkFrames("books-walk"),
+    speed: 29,
+    zRange: [0.40, 0.58],
+    sizeScale: 0.94,
+  },
+  {
+    id: "nubian-woman",
+    name: "Traditional Dress Stroller",
+    behavior: "stroller",
+    frames: walkFrames("nubian-walk"),
+    speed: 27,
+    zRange: [0.30, 0.48],
+    sizeScale: 0.95,
+  },
+  {
+    id: "reading-hijabi",
+    name: "Reading Student",
+    behavior: "stroller",
+    frames: walkFrames("reading-walk"),
+    speed: 24,
+    zRange: [0.44, 0.62],
+    sizeScale: 0.94,
   },
   {
     id: "briefcase-man",
     name: "Office Commuter",
     behavior: "stroller",
-    frames: ["/footer/street/walk-06.webp"],
-    speed: 42,
+    frames: walkFrames("briefcase-walk"),
+    speed: 34,
     zRange: [0.38, 0.58],
-    sizeScale: 0.9,
-  },
-  {
-    id: "striped-girl",
-    name: "Tote Bag Stroller",
-    behavior: "stroller",
-    frames: [
-      "/footer/street/striped-walk-01.webp",
-      "/footer/street/striped-walk-02.webp",
-      "/footer/street/striped-walk-03.webp",
-      "/footer/street/striped-walk-04.webp",
-      "/footer/street/striped-walk-05.webp",
-      "/footer/street/striped-walk-06.webp",
-    ],
-    speed: 30,
-    zRange: [0.48, 0.68],
     sizeScale: 0.96,
   },
   {
     id: "elder-cane",
     name: "Elder with Cane",
     behavior: "stroller",
-    frames: ["/footer/street/walk-12.webp"],
-    speed: 20,
+    frames: walkFrames("elder-walk"),
+    speed: 18,
     zRange: [0.25, 0.42],
-    sizeScale: 0.92,
+    sizeScale: 0.95,
+  },
+
+  // --- Fast runner (jogger) ---
+  {
+    id: "jogger-girl",
+    name: "Morning Jogger",
+    behavior: "cruiser",
+    frames: walkFrames("jogger-run"),
+    speed: 78,
+    zRange: [0.46, 0.56],
+    sizeScale: 0.94,
   },
 ];
