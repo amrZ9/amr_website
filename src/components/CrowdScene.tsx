@@ -2,86 +2,60 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { profile } from "@/data/profile";
+import {
+  STREET_NPCS,
+  STREET_POIS,
+  type NpcDefinition,
+} from "@/data/streetWorld";
 
-const WALKER_SPRITES = Array.from(
-  { length: 14 },
-  (_, i) => `/footer/street/walk-${String(i + 1).padStart(2, "0")}.webp`
-);
+type NpcState = "walking" | "pausing" | "ambient";
 
-const FAST_SPRITES = Array.from(
-  { length: 3 },
-  (_, i) => `/footer/street/fast-${String(i + 1).padStart(2, "0")}.webp`
-);
-
-const STILL_SPRITES = Array.from(
-  { length: 6 },
-  (_, i) => `/footer/street/still-${String(i + 1).padStart(2, "0")}.webp`
-);
-
-interface Actor {
-  kind: "walk" | "fast";
-  imgIdx: number;
+interface LiveNpc {
+  def: NpcDefinition;
+  imgs: HTMLImageElement[];
   x: number;
-  z: number; // 0 = far back, 1 = foreground
-  speed: number;
+  z: number;
+  targetX: number;
+  targetZ: number;
+  vx: number;
+  vz: number;
+  state: NpcState;
+  waitTimer: number;
   phase: number;
-  bobFreq: number;
   flip: boolean;
+  visitedPoi: boolean;
+  effectTimer: number;
 }
 
-interface StillProp {
-  imgIdx: number;
-  xRatio: number; // 0..1 across width
-  z: number;
-  flip: boolean;
+interface Particle {
+  kind: "steam" | "music" | "exhaust";
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  maxLife: number;
+  size: number;
+  glyph?: string;
 }
 
 interface CrowdSceneProps {
   descId: string;
 }
 
+const rand = (min: number, max: number) => min + Math.random() * (max - min);
+
 export function CrowdScene({ descId }: CrowdSceneProps) {
   const [paused, setPaused] = useState(false);
   const [ready, setReady] = useState(false);
-  const [entered, setEntered] = useState(false);
   const sceneRef = useRef<HTMLButtonElement>(null);
   const backCanvasRef = useRef<HTMLCanvasElement>(null);
   const frontCanvasRef = useRef<HTMLCanvasElement>(null);
-  const portraitRef = useRef<HTMLImageElement>(null);
-  const nameRef = useRef<HTMLSpanElement>(null);
   const pausedRef = useRef(paused);
-  const enteredAtRef = useRef<number | null>(null);
 
   useEffect(() => {
     pausedRef.current = paused;
   }, [paused]);
-
-  // Trigger Amr's entrance when the footer scrolls into view
-  useEffect(() => {
-    const scene = sceneRef.current;
-    if (!scene) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) {
-      setEntered(true);
-      enteredAtRef.current = -10000;
-      return;
-    }
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setEntered(true);
-          if (enteredAtRef.current === null) {
-            enteredAtRef.current = performance.now();
-          }
-          io.disconnect();
-        }
-      },
-      { threshold: 0.2 }
-    );
-    io.observe(scene);
-    return () => io.disconnect();
-  }, []);
 
   useEffect(() => {
     const scene = sceneRef.current;
@@ -97,65 +71,108 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
 
     let dead = false;
     let rafId = 0;
+    let loadedCount = 0;
 
-    const loadList = (srcs: string[]) =>
-      srcs.map((src) => {
+    const initialW = Math.max(scene.getBoundingClientRect().width, 1000);
+
+    // Build live NPCs from STREET_NPCS
+    const npcs: LiveNpc[] = STREET_NPCS.map((def, idx) => {
+      const imgs = def.frames.map((src) => {
         const img = new Image();
         img.src = src;
+        img.onload = () => {
+          loadedCount++;
+          if (loadedCount === Math.min(6, STREET_NPCS.length) && !dead) {
+            setReady(true);
+          }
+        };
         return img;
       });
 
-    const walkImgs = loadList(WALKER_SPRITES);
-    const fastImgs = loadList(FAST_SPRITES);
-    const stillImgs = loadList(STILL_SPRITES);
+      const [minZ, maxZ] = def.zRange;
+      if (def.behavior === "ambient") {
+        const poi = def.homePoi ? STREET_POIS[def.homePoi] : undefined;
+        return {
+          def,
+          imgs,
+          x: (poi ? poi.xRatio : 0.15) * initialW,
+          z: poi ? poi.z : minZ,
+          targetX: (poi ? poi.xRatio : 0.15) * initialW,
+          targetZ: poi ? poi.z : minZ,
+          vx: 0,
+          vz: 0,
+          state: "ambient",
+          waitTimer: 0,
+          phase: idx * 1.3,
+          flip: Boolean(def.defaultFlip),
+          visitedPoi: false,
+          effectTimer: rand(0.2, 1.2),
+        };
+      }
 
-    let loaded = 0;
-    const allImgs = [...walkImgs, ...fastImgs, ...stillImgs];
-    allImgs.forEach((img) => {
-      img.onload = () => {
-        loaded++;
-        if (loaded === Math.min(8, allImgs.length) && !dead) {
-          setReady(true);
-        }
-      };
-    });
+      const startZ = rand(minZ, maxZ);
+      const startX =
+        def.behavior === "cruiser"
+          ? -240
+          : ((idx + 0.5) / STREET_NPCS.length) * initialW;
+      const goRight = idx % 2 === 0;
+      const targetX = goRight ? initialW + 160 : -160;
 
-    // Calm ambient Egyptian street vignettes on the far left & right
-    const stills: StillProp[] = [
-      { imgIdx: 0, xRatio: 0.08, z: 0.38, flip: false }, // Foul cart left
-      { imgIdx: 5, xRatio: 0.21, z: 0.24, flip: false }, // Oud player back-left
-      { imgIdx: 3, xRatio: 0.89, z: 0.34, flip: true },  // Newspaper reader right
-      { imgIdx: 1, xRatio: 0.77, z: 0.22, flip: true },  // Grandma & cat back-right
-    ];
-
-    // Uncrowded, natural-depth walkers (7 walkers + 1 occasional fast scooter/jogger)
-    const depthSlots = [0.22, 0.35, 0.48, 0.56, 0.64, 0.78, 0.88];
-    const actors: Actor[] = depthSlots.map((z, i) => {
-      const dir = i % 2 === 0 ? 1 : -1;
-      const baseSpeed = 24 + z * 34 + (i % 3) * 6;
       return {
-        kind: "walk",
-        imgIdx: (i * 2) % WALKER_SPRITES.length,
-        x: ((i + 0.3) / depthSlots.length) * 1400 - 120,
-        z,
-        speed: dir * baseSpeed,
-        phase: i * 1.7,
-        bobFreq: 5.2 + (i % 3) * 0.7,
-        flip: dir < 0,
+        def,
+        imgs,
+        x: startX,
+        z: startZ,
+        targetX,
+        targetZ: rand(minZ, maxZ),
+        vx: 0,
+        vz: 0,
+        state: "walking",
+        waitTimer: 0,
+        phase: idx * 1.9,
+        flip: !goRight,
+        visitedPoi: false,
+        effectTimer: rand(0.1, 0.4),
       };
     });
 
-    // 1 fast mover (delivery scooter / jogger) in mid-back
-    actors.push({
-      kind: "fast",
-      imgIdx: 0,
-      x: -260,
-      z: 0.52,
-      speed: 115,
-      phase: 0,
-      bobFreq: 18,
-      flip: false,
-    });
+    const particles: Particle[] = [];
+
+    const pickNextRoute = (npc: LiveNpc, w: number) => {
+      const [minZ, maxZ] = npc.def.zRange;
+
+      // Customers occasionally walk to the Foul Cart, wait there, then leave
+      if (
+        npc.def.behavior === "customer" &&
+        !npc.visitedPoi &&
+        npc.def.homePoi &&
+        STREET_POIS[npc.def.homePoi]
+      ) {
+        const poi = STREET_POIS[npc.def.homePoi];
+        npc.targetX = poi.xRatio * w + rand(-18, 22);
+        npc.targetZ = poi.z + rand(-0.02, 0.03);
+        npc.visitedPoi = true;
+        npc.state = "walking";
+        return;
+      }
+
+      // Strollers sometimes pick an in-scene spot to pause & look around
+      if (npc.def.behavior === "stroller" && Math.random() < 0.45) {
+        // Avoid stopping right in front of Amr's center (0.42..0.58)
+        const leftZone = Math.random() < 0.5;
+        npc.targetX = leftZone ? rand(w * 0.24, w * 0.39) : rand(w * 0.61, w * 0.78);
+        npc.targetZ = rand(minZ, maxZ);
+        npc.state = "walking";
+        return;
+      }
+
+      // Otherwise walk cleanly off the opposite edge and respawn
+      const goRight = npc.x < w * 0.5;
+      npc.targetX = goRight ? w + 180 : -180;
+      npc.targetZ = rand(minZ, maxZ);
+      npc.visitedPoi = false;
+      npc.state = "walking";
+    };
 
     const resize = () => {
       const rect = scene.getBoundingClientRect();
@@ -170,19 +187,41 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
     ro.observe(scene);
     resize();
 
-    const drawSprite = (
+    const drawNpc = (
       ctx: CanvasRenderingContext2D,
-      img: HTMLImageElement,
-      x: number,
+      npc: LiveNpc,
       groundY: number,
       targetH: number,
-      flip: boolean,
-      bobY: number,
-      tiltRad: number,
       alpha: number
     ) => {
+      const frameIdx =
+        npc.imgs.length > 1
+          ? Math.floor(npc.phase * 0.8) % npc.imgs.length
+          : 0;
+      const img = npc.imgs[frameIdx];
       if (!img || !img.complete || !img.naturalWidth) return;
+
       const targetW = (img.naturalWidth / img.naturalHeight) * targetH;
+      const speedMag = Math.hypot(npc.vx, npc.vz * 120);
+      const isMoving = npc.state === "walking" && speedMag > 4;
+
+      // Natural stride bob + subtle breathing when paused/ambient
+      const bobY = isMoving
+        ? npc.def.behavior === "cruiser"
+          ? Math.sin(npc.phase * 2.5) * 1.2
+          : Math.abs(Math.sin(npc.phase)) * (2.2 + npc.z * 2.8)
+        : 0;
+
+      const tilt = isMoving
+        ? npc.def.behavior === "cruiser"
+          ? 0
+          : Math.sin(npc.phase) * 0.022
+        : 0;
+
+      // Subtle breathing squash/stretch when idle
+      const breathScaleY = !isMoving
+        ? 1 + Math.sin(npc.phase * 1.4) * 0.008
+        : 1 + Math.abs(Math.sin(npc.phase)) * 0.014;
 
       // Soft ground shadow
       ctx.save();
@@ -190,10 +229,10 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       ctx.fillStyle = "#000";
       ctx.beginPath();
       ctx.ellipse(
-        x + targetW * 0.5,
-        groundY - 2,
+        npc.x,
+        groundY - 1.5,
         targetW * 0.34,
-        Math.max(2.5, targetH * 0.025),
+        Math.max(2.5, targetH * 0.024),
         0,
         0,
         Math.PI * 2
@@ -203,9 +242,9 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
 
       ctx.save();
       ctx.globalAlpha = alpha;
-      ctx.translate(x + targetW * 0.5, groundY - bobY);
-      if (tiltRad) ctx.rotate(tiltRad);
-      if (flip) ctx.scale(-1, 1);
+      ctx.translate(npc.x, groundY - bobY);
+      if (tilt) ctx.rotate(tilt);
+      ctx.scale(npc.flip ? -1 : 1, breathScaleY);
       ctx.drawImage(img, -targetW * 0.5, -targetH, targetW, targetH);
       ctx.restore();
     };
@@ -221,41 +260,6 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       const w = rect.width;
       const h = rect.height;
 
-      // Animate Amr's walk-in from the background & AMR. edge-in reveal
-      if (enteredAtRef.current !== null) {
-        const elapsed = (now - enteredAtRef.current) / 1000;
-        const portraitEl = portraitRef.current;
-        const nameEl = nameRef.current;
-
-        // Portrait emerges from 0.9s -> 2.7s
-        if (portraitEl) {
-          const tRaw = Math.max(0, Math.min(1, (elapsed - 0.9) / 1.8));
-          const ease = 1 - Math.pow(1 - tRaw, 3); // cubic ease-out
-          const scale = 0.36 + ease * 0.64;
-          const riseY = (1 - ease) * -58; // starts higher on horizon
-          const walkBob =
-            tRaw > 0 && tRaw < 1
-              ? -Math.abs(Math.sin(tRaw * Math.PI * 5)) * (1 - tRaw * 0.6) * 7
-              : 0;
-          const opacity = Math.min(1, tRaw * 2.2);
-          const blur = (1 - ease) * 1.8;
-
-          portraitEl.style.opacity = String(opacity);
-          portraitEl.style.filter = blur > 0.05 ? `blur(${blur.toFixed(2)}px)` : "none";
-          portraitEl.style.transformOrigin = "bottom center";
-          portraitEl.style.transform = `translate(-50%, ${(riseY + walkBob).toFixed(1)}px) scale(${scale.toFixed(3)})`;
-        }
-
-        // AMR. text edges in from 1.7s -> 3.1s
-        if (nameEl) {
-          const nRaw = Math.max(0, Math.min(1, (elapsed - 1.7) / 1.4));
-          const nEase = 1 - Math.pow(1 - nRaw, 3);
-          const clipBottom = (1 - nEase) * 100;
-          nameEl.style.opacity = String(nEase);
-          nameEl.style.clipPath = `inset(0 0 ${clipBottom.toFixed(1)}% 0)`;
-        }
-      }
-
       const bCtx = backCanvas.getContext("2d");
       const fCtx = frontCanvas.getContext("2d");
 
@@ -265,94 +269,186 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         bCtx.clearRect(0, 0, w, h);
         fCtx.clearRect(0, 0, w, h);
 
-        // Update actors
-        actors.forEach((a) => {
-          if (!pausedRef.current) {
-            a.x += a.speed * dt;
-            a.phase += a.bobFreq * dt;
-            const margin = a.kind === "fast" ? 360 : 180;
-            if (a.speed > 0 && a.x > w + margin) {
-              a.x = -margin;
-              a.imgIdx =
-                (a.imgIdx + 3) %
-                (a.kind === "fast" ? FAST_SPRITES.length : WALKER_SPRITES.length);
-            } else if (a.speed < 0 && a.x < -margin) {
-              a.x = w + margin;
-              a.imgIdx =
-                (a.imgIdx + 3) %
-                (a.kind === "fast" ? FAST_SPRITES.length : WALKER_SPRITES.length);
+        const groundForZ = (z: number) => h * (0.78 + z * 0.19);
+        // Keep NPCs proportionally smaller than Amr so Amr is always the main focus
+        const heightForZ = (z: number, scale = 1) =>
+          h * (0.26 + z * 0.28) * scale;
+
+        // Update NPCs
+        npcs.forEach((npc) => {
+          if (npc.def.behavior === "ambient") {
+            const poi = npc.def.homePoi ? STREET_POIS[npc.def.homePoi] : undefined;
+            if (poi) {
+              npc.x = poi.xRatio * w;
+              npc.z = poi.z;
+            }
+            if (!pausedRef.current) {
+              npc.phase += dt * 1.6;
+              if (npc.def.effect) {
+                npc.effectTimer -= dt;
+                if (npc.effectTimer <= 0) {
+                  const gy = groundForZ(npc.z);
+                  const th = heightForZ(npc.z, npc.def.sizeScale ?? 1);
+                  if (npc.def.effect === "steam") {
+                    particles.push({
+                      kind: "steam",
+                      x: npc.x + rand(-6, 12),
+                      y: gy - th * 0.62,
+                      vx: rand(-4, 6),
+                      vy: rand(-18, -10),
+                      life: 0,
+                      maxLife: rand(1.6, 2.4),
+                      size: rand(4, 8),
+                    });
+                    npc.effectTimer = rand(0.45, 0.9);
+                  } else if (npc.def.effect === "music") {
+                    particles.push({
+                      kind: "music",
+                      x: npc.x + rand(8, 22),
+                      y: gy - th * 0.68,
+                      vx: rand(6, 14),
+                      vy: rand(-22, -14),
+                      life: 0,
+                      maxLife: rand(1.8, 2.6),
+                      size: rand(11, 15),
+                      glyph: Math.random() < 0.5 ? "♪" : "♫",
+                    });
+                    npc.effectTimer = rand(1.2, 2.4);
+                  }
+                }
+              }
+            }
+            return;
+          }
+
+          if (pausedRef.current) return;
+
+          if (npc.state === "pausing") {
+            npc.vx *= 0.85;
+            npc.vz *= 0.85;
+            npc.phase += dt * 1.5;
+            npc.waitTimer -= dt;
+            if (npc.waitTimer <= 0) {
+              pickNextRoute(npc, w);
+            }
+            return;
+          }
+
+          // Walking / Cruising toward (targetX, targetZ)
+          const dx = npc.targetX - npc.x;
+          const dz = npc.targetZ - npc.z;
+          const dist = Math.hypot(dx, dz * 260);
+
+          if (dist < 14) {
+            // Reached off-screen edge? Respawn on opposite side or wait briefly
+            if (npc.x < -100 || npc.x > w + 100) {
+              const [minZ, maxZ] = npc.def.zRange;
+              const fromLeft = Math.random() < 0.5;
+              npc.x = fromLeft ? -150 : w + 150;
+              npc.z = rand(minZ, maxZ);
+              npc.visitedPoi = false;
+              npc.state = "pausing";
+              npc.waitTimer =
+                npc.def.behavior === "cruiser" ? rand(3.0, 6.5) : rand(0.5, 2.2);
+              return;
+            }
+            // Reached in-scene POI (like Foul Cart or stroll pause)
+            npc.state = "pausing";
+            npc.waitTimer =
+              npc.def.behavior === "customer" ? rand(3.0, 5.5) : rand(1.8, 3.8);
+            // Face the foul cart if stopping there
+            if (npc.def.behavior === "customer") {
+              npc.flip = true;
+            }
+            return;
+          }
+
+          // Smooth speed with ease-in/out near target
+          const depthSpeedFactor = 0.72 + npc.z * 0.55;
+          const desiredSpeed =
+            npc.def.speed *
+            depthSpeedFactor *
+            Math.min(1, Math.max(0.25, dist / 70));
+          const dirX = dx / Math.max(1, Math.abs(dx) + Math.abs(dz * 260));
+          const dirZ = (dz * 260) / Math.max(1, Math.abs(dx) + Math.abs(dz * 260));
+
+          const targetVx = dirX * desiredSpeed;
+          const targetVz = (dirZ * desiredSpeed) / 260;
+
+          npc.vx += (targetVx - npc.vx) * Math.min(1, dt * 6);
+          npc.vz += (targetVz - npc.vz) * Math.min(1, dt * 6);
+
+          npc.x += npc.vx * dt;
+          npc.z += npc.vz * dt;
+          if (Math.abs(npc.vx) > 2) {
+            npc.flip = npc.vx < 0;
+          }
+          npc.phase += dt * (npc.def.behavior === "cruiser" ? 12 : 5.5 + npc.z * 2);
+
+          // Scooter exhaust puffs
+          if (npc.def.effect === "exhaust" && npc.x > 0 && npc.x < w) {
+            npc.effectTimer -= dt;
+            if (npc.effectTimer <= 0) {
+              const gy = groundForZ(npc.z);
+              particles.push({
+                kind: "exhaust",
+                x: npc.x + (npc.flip ? 28 : -28),
+                y: gy - 14,
+                vx: (npc.flip ? 1 : -1) * rand(14, 24),
+                vy: rand(-10, -4),
+                life: 0,
+                maxLife: rand(0.6, 1.0),
+                size: rand(3, 6),
+              });
+              npc.effectTimer = rand(0.14, 0.25);
             }
           }
         });
 
-        // Build depth-sorted render list for back layer (z < 0.72) and front layer (z >= 0.72)
-        type DrawItem = {
-          z: number;
-          run: (ctx: CanvasRenderingContext2D) => void;
-        };
-        const backItems: DrawItem[] = [];
-        const frontItems: DrawItem[] = [];
+        // Update & draw particles on back layer
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          if (!pausedRef.current) {
+            p.life += dt;
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+          }
+          if (p.life >= p.maxLife) {
+            particles.splice(i, 1);
+            continue;
+          }
+          const t = p.life / p.maxLife;
+          const alpha = Math.sin(t * Math.PI) * (p.kind === "music" ? 0.55 : 0.22);
+          bCtx.save();
+          bCtx.globalAlpha = alpha;
+          if (p.kind === "music" && p.glyph) {
+            bCtx.fillStyle = "#141414";
+            bCtx.font = `${p.size}px sans-serif`;
+            bCtx.fillText(p.glyph, p.x, p.y);
+          } else {
+            bCtx.fillStyle = "#555";
+            bCtx.beginPath();
+            bCtx.arc(p.x, p.y, p.size * (0.7 + t * 0.8), 0, Math.PI * 2);
+            bCtx.fill();
+          }
+          bCtx.restore();
+        }
 
-        // Ground plane: z=0 -> 80% height, z=1 -> 98% height
-        const groundForZ = (z: number) => h * (0.78 + z * 0.2);
-        const heightForZ = (z: number) => h * (0.28 + z * 0.34);
+        // Depth-sorted rendering: z < 0.65 behind Amr, z >= 0.65 occasionally in front
+        const backNpcs = npcs.filter((n) => n.z < 0.65).sort((a, b) => a.z - b.z);
+        const frontNpcs = npcs.filter((n) => n.z >= 0.65).sort((a, b) => a.z - b.z);
 
-        // Stationary ambient street life (always in back layer, softly framed on edges)
-        stills.forEach((s) => {
-          backItems.push({
-            z: s.z,
-            run: (ctx) => {
-              const img = stillImgs[s.imgIdx];
-              const targetH = heightForZ(s.z) * 0.95;
-              const x = s.xRatio * w - targetH * 0.4;
-              drawSprite(
-                ctx,
-                img,
-                x,
-                groundForZ(s.z),
-                targetH,
-                s.flip,
-                0,
-                0,
-                0.78 + s.z * 0.2
-              );
-            },
-          });
+        backNpcs.forEach((npc) => {
+          const gy = groundForZ(npc.z);
+          const th = heightForZ(npc.z, npc.def.sizeScale ?? 1);
+          drawNpc(bCtx, npc, gy, th, 0.78 + npc.z * 0.22);
         });
 
-        // Moving walkers & fast movers
-        actors.forEach((a) => {
-          const item: DrawItem = {
-            z: a.z,
-            run: (ctx) => {
-              const img = a.kind === "fast" ? fastImgs[a.imgIdx] : walkImgs[a.imgIdx];
-              const targetH = heightForZ(a.z) * (a.kind === "fast" ? 0.92 : 1);
-              const bobY =
-                a.kind === "fast"
-                  ? Math.sin(a.phase) * 1.4
-                  : Math.abs(Math.sin(a.phase)) * (2.5 + a.z * 3.5);
-              const tilt =
-                a.kind === "fast" ? 0 : Math.sin(a.phase) * 0.018;
-              const alpha = 0.72 + a.z * 0.28;
-              drawSprite(
-                ctx,
-                img,
-                a.x,
-                groundForZ(a.z),
-                targetH,
-                a.flip,
-                bobY,
-                tilt,
-                alpha
-              );
-            },
-          };
-          if (a.z < 0.72) backItems.push(item);
-          else frontItems.push(item);
+        frontNpcs.forEach((npc) => {
+          const gy = groundForZ(npc.z);
+          const th = heightForZ(npc.z, npc.def.sizeScale ?? 1);
+          drawNpc(fCtx, npc, gy, th, 0.9 + npc.z * 0.1);
         });
-
-        backItems.sort((a, b) => a.z - b.z).forEach((it) => it.run(bCtx));
-        frontItems.sort((a, b) => a.z - b.z).forEach((it) => it.run(fCtx));
       }
 
       rafId = requestAnimationFrame(draw);
@@ -383,14 +479,8 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         aria-pressed={paused}
         onClick={() => setPaused((p) => !p)}
         data-ready={String(ready)}
-        data-entered={String(entered)}
       >
-        <span
-          ref={nameRef}
-          className="footer-crowd-name"
-          aria-hidden="true"
-          style={{ opacity: 0 }}
-        >
+        <span className="footer-crowd-name" aria-hidden="true">
           {profile.footer.crowdName}
         </span>
         <canvas
@@ -399,14 +489,12 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           aria-hidden="true"
         />
         <img
-          ref={portraitRef}
           className="footer-crowd-portrait"
           src={profile.footer.crowdPortrait}
           alt=""
           width={332}
           height={975}
           loading="eager"
-          style={{ opacity: 0 }}
         />
         <canvas
           ref={frontCanvasRef}
