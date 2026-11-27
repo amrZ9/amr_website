@@ -172,9 +172,9 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       };
     };
 
-    // 12 active walkers distributed cleanly across the 3 depth lanes:
-    // Lane 0 (far back): 5 walkers | Lane 1 (mid): 4 walkers | Lane 2 (front): 3 walkers
-    const laneAssignments: (0 | 1 | 2)[] = [0, 1, 2, 0, 1, 0, 2, 1, 0, 1, 2, 0];
+    // 15 active walkers distributed cleanly across the 3 depth lanes:
+    // Lane 0 (far back): 5 walkers | Lane 1 (mid): 6 walkers | Lane 2 (front): 4 walkers
+    const laneAssignments: (0 | 1 | 2)[] = [0, 1, 2, 0, 1, 0, 2, 1, 0, 1, 2, 0, 1, 1, 2];
     const walkers: LiveWalker[] = laneAssignments.map((lane, i) =>
       spawnWalkerInLane(lane, ((i + 0.5) / laneAssignments.length) * initialW)
     );
@@ -301,9 +301,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           }
         });
 
-        // 2. Update walkers with anti-overlap spacing & Lane-1 ambient clear-zone rule
-        const LANE_MIN_GAP = [64, 80, 94] as const;
-
+        // 2. Update walkers (smooth constant stride + Lane-1 ambient clear-zone rule)
         for (let i = 0; i < walkers.length; i++) {
           const wk = walkers[i];
           if (pausedRef.current) continue;
@@ -351,28 +349,6 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
               // Don't walk onto the active right ambient—turn back smoothly
               wk.dir = -1;
               targetVx = -wk.def.speed * laneCfg.speedMult;
-            }
-          }
-
-          // Rule B: No one is allowed on top of another walker in the same lane
-          const minGap = LANE_MIN_GAP[wk.lane];
-          for (let j = 0; j < walkers.length; j++) {
-            if (i === j) continue;
-            const other = walkers[j];
-            if (other.lane !== wk.lane) continue;
-            const dx = other.x - wk.x;
-            const ahead = wk.dir === 1 ? dx > 0 && dx < minGap : dx < 0 && -dx < minGap;
-            if (ahead) {
-              if (other.dir === wk.dir && other.state === "walking") {
-                // Match slower walker's pace to keep polite spacing
-                const otherAbs = Math.abs(other.vx);
-                if (Math.abs(targetVx) > otherAbs) {
-                  targetVx = wk.dir * Math.max(8, otherAbs * 0.9);
-                }
-              } else {
-                // Gently ease down or step aside if blocked
-                targetVx *= 0.25;
-              }
             }
           }
 
