@@ -137,7 +137,7 @@ export const STREET_NPCS: NpcDefinition[] = [
       "/footer/street/striped-walk-05.webp",
       "/footer/street/striped-walk-06.webp",
     ],
-    speed: 44,
+    speed: 30,
     zRange: [0.48, 0.68],
     sizeScale: 0.96,
   },

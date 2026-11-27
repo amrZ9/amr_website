@@ -199,7 +199,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       const hasWalkCycle = npc.imgs.length > 1;
       const frameIdx = hasWalkCycle
         ? isMoving
-          ? Math.floor(npc.phase * 1.25) % npc.imgs.length
+          ? Math.floor(npc.phase * 0.85) % npc.imgs.length
           : 2 // Hold passing/standing pose when paused
         : 0;
       const img = npc.imgs[frameIdx];
@@ -228,23 +228,6 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         : hasWalkCycle
           ? 1
           : 1 + Math.abs(Math.sin(npc.phase)) * 0.014;
-
-      // Soft ground shadow
-      ctx.save();
-      ctx.globalAlpha = alpha * 0.14;
-      ctx.fillStyle = "#000";
-      ctx.beginPath();
-      ctx.ellipse(
-        npc.x,
-        groundY - 1.5,
-        targetW * 0.34,
-        Math.max(2.5, targetH * 0.024),
-        0,
-        0,
-        Math.PI * 2
-      );
-      ctx.fill();
-      ctx.restore();
 
       ctx.save();
       ctx.globalAlpha = alpha;
