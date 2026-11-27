@@ -4,12 +4,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { profile } from "@/data/profile";
 import {
   STREET_NPCS,
-  STREET_POIS,
   type NpcDefinition,
 } from "@/data/streetWorld";
 import neighborhoodWorld from "@/data/neighborhoodWorld.json";
 
-type NpcState = "walking" | "pausing" | "chatting" | "ambient";
+type NpcState = "walking" | "pausing" | "chatting";
 
 interface EncounterRule {
   targetNpcId: string;
@@ -36,16 +35,21 @@ const WORLD_BY_SPRITE = new Map<string, WorldNpcMeta>(
   (neighborhoodWorld.npcs as WorldNpcMeta[]).map((n) => [n.spriteId, n])
 );
 
-interface LiveNpc {
+/** 3 clear visual depth lanes so back walkers are never hidden behind front walkers */
+const LANES = [
+  { id: 0, z: 0.15, groundRatio: 0.63, heightRatio: 0.24, speedMult: 0.72, alpha: 0.76 }, // Far back
+  { id: 1, z: 0.50, groundRatio: 0.80, heightRatio: 0.34, speedMult: 0.92, alpha: 0.90 }, // Midground
+  { id: 2, z: 0.85, groundRatio: 0.96, heightRatio: 0.44, speedMult: 1.08, alpha: 1.00 }, // Foreground
+] as const;
+
+interface LiveWalker {
   def: NpcDefinition;
   meta?: WorldNpcMeta;
   imgs: HTMLImageElement[];
+  lane: 0 | 1 | 2;
   x: number;
-  z: number;
-  targetX: number;
-  targetZ: number;
+  dir: 1 | -1; // 1 = left->right, -1 = right->left
   vx: number;
-  vz: number;
   state: NpcState;
   waitTimer: number;
   chatCooldown: number;
@@ -56,20 +60,17 @@ interface LiveNpc {
   speedBoost: number;
   phase: number;
   flip: boolean;
-  visitedPoi: boolean;
-  effectTimer: number;
 }
 
-interface Particle {
-  kind: "steam" | "music";
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  life: number;
-  maxLife: number;
-  size: number;
-  glyph?: string;
+interface AmbientSlot {
+  side: "left" | "right";
+  xRatio: number;
+  lane: 0 | 1;
+  def: NpcDefinition;
+  imgs: HTMLImageElement[];
+  timer: number;     // 0 -> 12s lifecycle (1s fade-in, 10s hold, 1s fade/slide out)
+  phase: number;
+  flip: boolean;
 }
 
 interface CrowdSceneProps {
@@ -104,156 +105,115 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
 
     let dead = false;
     let rafId = 0;
-    let loadedCount = 0;
 
-    const initialW = Math.max(scene.getBoundingClientRect().width, 1200);
-    const movers = STREET_NPCS.filter((n) => n.behavior !== "ambient");
-
-    // Pick 1 random animated ambient vignette per POI slot (foulCart, oudCorner, rightBench)
-    const ambientSlots = ["foulCart", "oudCorner", "rightBench"];
-    const activeAmbientIds = new Set<string>();
-    ambientSlots.forEach((slot) => {
-      const candidates = STREET_NPCS.filter(
-        (n) => n.behavior === "ambient" && n.homePoi === slot
-      );
-      if (candidates.length > 0) {
-        const chosen = candidates[Math.floor(Math.random() * candidates.length)];
-        activeAmbientIds.add(chosen.id);
-      }
-    });
-    const activeDefs = STREET_NPCS.filter(
-      (n) => n.behavior !== "ambient" || activeAmbientIds.has(n.id)
-    );
-
-    let moverIdx = 0;
-    const npcs: LiveNpc[] = activeDefs.map((def, idx) => {
-      const meta = WORLD_BY_SPRITE.get(def.id);
+    // Cache loaded images by spriteId
+    const imgCache = new Map<string, HTMLImageElement[]>();
+    let loadedFrames = 0;
+    const getFrames = (def: NpcDefinition) => {
+      const existing = imgCache.get(def.id);
+      if (existing) return existing;
       const imgs = def.frames.map((src) => {
         const img = new Image();
         img.src = src;
         img.onload = () => {
-          loadedCount++;
-          if (loadedCount === 12 && !dead) {
-            setReady(true);
-          }
+          loadedFrames++;
+          if (loadedFrames === 12 && !dead) setReady(true);
         };
         return img;
       });
+      imgCache.set(def.id, imgs);
+      return imgs;
+    };
 
-      const [minZ, maxZ] = def.zRange;
-      if (def.behavior === "ambient") {
-        const poi = def.homePoi ? STREET_POIS[def.homePoi] : undefined;
-        return {
-          def,
-          meta,
-          imgs,
-          x: (poi ? poi.xRatio : 0.15) * initialW,
-          z: poi ? poi.z : minZ,
-          targetX: (poi ? poi.xRatio : 0.15) * initialW,
-          targetZ: poi ? poi.z : minZ,
-          vx: 0,
-          vz: 0,
-          state: "ambient",
-          waitTimer: 0,
-          chatCooldown: 999,
-          chatPartnerId: null,
-          activeLine: null,
-          reactionGlyph: null,
-          reactionTimer: 0,
-          speedBoost: 1,
-          phase: idx * 1.3,
-          flip: Boolean(def.defaultFlip),
-          visitedPoi: false,
-          effectTimer: rand(0.2, 1.2),
-        };
-      }
+    const walkerPool = STREET_NPCS.filter((n) => n.behavior !== "ambient");
+    const ambientPool = STREET_NPCS.filter((n) => n.behavior === "ambient");
 
-      const slot = moverIdx++;
-      const MAX_ACTIVE = 8;
-      const isActiveInitially = slot < MAX_ACTIVE;
-      const startX = isActiveInitially
-        ? ((slot + 0.5) / MAX_ACTIVE) * initialW
-        : -9999; // Parked in reserve off-screen until a slot opens
-      const startZ = rand(minZ, maxZ);
-      const goRight = slot % 2 === 0;
-      const targetX = goRight ? initialW + 180 : -180;
+    // Preload first batch
+    walkerPool.slice(0, 10).forEach(getFrames);
+    ambientPool.slice(0, 4).forEach(getFrames);
+
+    // Round-robin cursors: strictly 1 -> 32 for walkers, 1 -> 21 for ambient
+    let nextWalkerIdx = 0;
+    let nextAmbientIdx = 0;
+    let nextEntryDir: 1 | -1 = 1;
+
+    const initialW = Math.max(scene.getBoundingClientRect().width, 1200);
+
+    const spawnWalkerInLane = (
+      lane: 0 | 1 | 2,
+      initialX?: number
+    ): LiveWalker => {
+      const def = walkerPool[nextWalkerIdx % walkerPool.length];
+      nextWalkerIdx++;
+      const dir = nextEntryDir;
+      nextEntryDir = dir === 1 ? -1 : 1;
+
+      const x =
+        initialX !== undefined ? initialX : dir === 1 ? -110 : initialW + 110;
 
       return {
         def,
-        meta,
-        imgs,
-        x: startX,
-        z: startZ,
-        targetX,
-        targetZ: rand(minZ, maxZ),
-        vx: 0,
-        vz: 0,
-        state: isActiveInitially ? "walking" : "pausing",
-        waitTimer: isActiveInitially ? 0 : 99999,
-        chatCooldown: rand(2, 8),
+        meta: WORLD_BY_SPRITE.get(def.id),
+        imgs: getFrames(def),
+        lane,
+        x,
+        dir,
+        vx: dir * def.speed * LANES[lane].speedMult,
+        state: "walking",
+        waitTimer: 0,
+        chatCooldown: rand(2, 6),
         chatPartnerId: null,
         activeLine: null,
         reactionGlyph: null,
         reactionTimer: 0,
         speedBoost: 1,
-        phase: slot * 1.7,
-        flip: !goRight,
-        visitedPoi: false,
-        effectTimer: rand(0.1, 0.4),
+        phase: rand(0, 6),
+        flip: dir < 0,
       };
-    });
-
-    const particles: Particle[] = [];
-
-    const pickNextRoute = (npc: LiveNpc, w: number) => {
-      const [minZ, maxZ] = npc.def.zRange;
-      npc.speedBoost = 1;
-
-      // Check if this NPC has a hang_out_at_spot rule pointing to an active ambient spot!
-      const hangRule = npc.meta?.encounterRules?.find(
-        (r) => r.action === "hang_out_at_spot"
-      );
-      if (hangRule && !npc.visitedPoi) {
-        const spot = npcs.find(
-          (n) => n.state === "ambient" && n.meta?.npcId === hangRule.targetNpcId
-        );
-        if (spot) {
-          npc.targetX = spot.x + (spot.x < w * 0.5 ? 44 : -44);
-          npc.targetZ = Math.min(0.58, spot.z + 0.04);
-          npc.visitedPoi = true;
-          npc.state = "walking";
-          return;
-        }
-      }
-
-      if (
-        npc.def.behavior === "customer" &&
-        !npc.visitedPoi &&
-        npc.def.homePoi &&
-        STREET_POIS[npc.def.homePoi]
-      ) {
-        const poi = STREET_POIS[npc.def.homePoi];
-        npc.targetX = poi.xRatio * w + rand(-16, 22);
-        npc.targetZ = poi.z + rand(-0.02, 0.03);
-        npc.visitedPoi = true;
-        npc.state = "walking";
-        return;
-      }
-
-      if (npc.def.behavior === "stroller" && Math.random() < 0.3) {
-        const leftZone = Math.random() < 0.5;
-        npc.targetX = leftZone ? rand(w * 0.22, w * 0.39) : rand(w * 0.61, w * 0.80);
-        npc.targetZ = rand(minZ, maxZ);
-        npc.state = "walking";
-        return;
-      }
-
-      const goRight = npc.x < w * 0.5;
-      npc.targetX = goRight ? w + 180 : -180;
-      npc.targetZ = rand(minZ, maxZ);
-      npc.visitedPoi = false;
-      npc.state = "walking";
     };
+
+    // 7 active walkers distributed cleanly across the 3 depth lanes:
+    // Lane 0 (far back): 3 walkers | Lane 1 (mid): 2 walkers | Lane 2 (front): 2 walkers
+    const laneAssignments: (0 | 1 | 2)[] = [0, 0, 0, 1, 1, 2, 2];
+    const walkers: LiveWalker[] = laneAssignments.map((lane, i) =>
+      spawnWalkerInLane(lane, ((i + 0.5) / laneAssignments.length) * initialW)
+    );
+
+    // 2 rotating ambient slots (Left & Right) — each holds for 10s then exits & rotates through all 21!
+    const nextAmbientDef = () => {
+      const def = ambientPool[nextAmbientIdx % ambientPool.length];
+      nextAmbientIdx++;
+      return def;
+    };
+
+    const ambientSlots: AmbientSlot[] = [
+      (() => {
+        const def = nextAmbientDef();
+        return {
+          side: "left",
+          xRatio: 0.11,
+          lane: 1,
+          def,
+          imgs: getFrames(def),
+          timer: 0,
+          phase: 0,
+          flip: false,
+        };
+      })(),
+      (() => {
+        const def = nextAmbientDef();
+        return {
+          side: "right",
+          xRatio: 0.89,
+          lane: 1,
+          def,
+          imgs: getFrames(def),
+          timer: 5.5, // Staggered so left & right swap at different times
+          phase: 1.5,
+          flip: Boolean(def.defaultFlip),
+        };
+      })(),
+    ];
 
     const resize = () => {
       const rect = scene.getBoundingClientRect();
@@ -283,7 +243,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         const shortText = text.length > 52 ? text.slice(0, 49).trim() + "…" : text;
         const padX = 10;
         const metrics = ctx.measureText(shortText);
-        const bw = Math.min(maxWidth, metrics.width + padX * 2);
+        const bw = Math.min(maxWidth - 20, metrics.width + padX * 2);
         const bh = 24;
         const clampedX = Math.max(bw / 2 + 8, Math.min(maxWidth - bw / 2 - 8, cx));
 
@@ -300,73 +260,8 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(shortText, 0, 0.5, bw - padX * 1.5);
-      } else {
-        ctx.translate(cx, floatY);
-        const bw = 30;
-        const bh = 16;
-        ctx.fillStyle = "#ffffff";
-        ctx.strokeStyle = "#141414";
-        ctx.lineWidth = 1.4;
-        ctx.beginPath();
-        ctx.roundRect(-bw / 2, -bh / 2, bw, bh, 8);
-        ctx.fill();
-        ctx.stroke();
-
-        for (let d = 0; d < 3; d++) {
-          const bounce = Math.sin(t * 5 - d * 0.9) > 0.2 ? -1.4 : 0;
-          ctx.fillStyle = "#141414";
-          ctx.beginPath();
-          ctx.arc(-6 + d * 6, bounce, 1.6, 0, Math.PI * 2);
-          ctx.fill();
-        }
       }
       ctx.restore();
-    };
-
-    const drawNpc = (
-      ctx: CanvasRenderingContext2D,
-      npc: LiveNpc,
-      groundY: number,
-      targetH: number,
-      alpha: number
-    ) => {
-      const speedMag = Math.hypot(npc.vx, npc.vz * 120);
-      const isMoving = npc.state === "walking" && speedMag > 4;
-      const hasWalkCycle = npc.imgs.length > 1;
-      const frameIdx = hasWalkCycle
-        ? npc.state === "ambient"
-          ? Math.floor(npc.phase * 1.6) % npc.imgs.length
-          : isMoving
-            ? Math.floor(npc.phase * 0.85) % npc.imgs.length
-            : 1
-        : 0;
-      const img = npc.imgs[frameIdx];
-      if (!img || !img.complete || !img.naturalWidth) return;
-
-      const targetW = (img.naturalWidth / img.naturalHeight) * targetH;
-      const breathScaleY =
-        npc.state === "chatting"
-          ? 1 + Math.sin(npc.phase * 2.4) * 0.012
-          : !isMoving
-            ? 1 + Math.sin(npc.phase * 1.4) * 0.008
-            : 1;
-
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.translate(npc.x, groundY);
-      ctx.scale(npc.flip ? -1 : 1, breathScaleY);
-      ctx.drawImage(img, -targetW * 0.5, -targetH, targetW, targetH);
-      ctx.restore();
-
-      // Quick reaction glyph (! or 👋)
-      if (npc.reactionGlyph && npc.reactionTimer > 0) {
-        ctx.save();
-        ctx.font = "700 14px system-ui, sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillStyle = "#141414";
-        ctx.fillText(npc.reactionGlyph, npc.x, groundY - targetH - 8);
-        ctx.restore();
-      }
     };
 
     let last = 0;
@@ -389,162 +284,88 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         bCtx.clearRect(0, 0, w, h);
         fCtx.clearRect(0, 0, w, h);
 
-        const groundForZ = (z: number) => h * (0.78 + z * 0.19);
-        const heightForZ = (z: number, scale = 1) =>
-          h * (0.26 + z * 0.28) * scale;
-
-        // 1. Update NPCs
-        npcs.forEach((npc) => {
-          if (npc.reactionTimer > 0 && !pausedRef.current) {
-            npc.reactionTimer -= dt;
-            if (npc.reactionTimer <= 0) npc.reactionGlyph = null;
-          }
-
-          if (npc.def.behavior === "ambient") {
-            const poi = npc.def.homePoi ? STREET_POIS[npc.def.homePoi] : undefined;
-            if (poi) {
-              npc.x = poi.xRatio * w;
-              npc.z = poi.z;
+        // 1. Update rotating ambient slots (1s enter, 10s hold, 1s exit toward edge)
+        const HOLD_TOTAL = 12.0;
+        ambientSlots.forEach((slot) => {
+          if (!pausedRef.current) {
+            slot.timer += dt;
+            slot.phase += dt * 2.4;
+            if (slot.timer >= HOLD_TOTAL) {
+              const nextDef = nextAmbientDef();
+              slot.def = nextDef;
+              slot.imgs = getFrames(nextDef);
+              slot.timer = 0;
+              slot.phase = 0;
+              slot.flip = Boolean(nextDef.defaultFlip);
             }
-            if (!pausedRef.current) {
-              npc.phase += dt * 1.6;
-              if (npc.def.effect) {
-                npc.effectTimer -= dt;
-                if (npc.effectTimer <= 0) {
-                  const gy = groundForZ(npc.z);
-                  const th = heightForZ(npc.z, npc.def.sizeScale ?? 1);
-                  if (npc.def.effect === "steam") {
-                    particles.push({
-                      kind: "steam",
-                      x: npc.x + rand(-6, 12),
-                      y: gy - th * 0.62,
-                      vx: rand(-4, 6),
-                      vy: rand(-18, -10),
-                      life: 0,
-                      maxLife: rand(1.6, 2.4),
-                      size: rand(4, 8),
-                    });
-                    npc.effectTimer = rand(0.45, 0.9);
-                  } else if (npc.def.effect === "music") {
-                    particles.push({
-                      kind: "music",
-                      x: npc.x + rand(8, 22),
-                      y: gy - th * 0.68,
-                      vx: rand(6, 14),
-                      vy: rand(-22, -14),
-                      life: 0,
-                      maxLife: rand(1.8, 2.6),
-                      size: rand(11, 15),
-                      glyph: Math.random() < 0.5 ? "♪" : "♫",
-                    });
-                    npc.effectTimer = rand(1.2, 2.4);
-                  }
-                }
-              }
-            }
-            return;
           }
-
-          if (pausedRef.current) return;
-          if (npc.chatCooldown > 0) npc.chatCooldown -= dt;
-
-          if (npc.state === "chatting" || npc.state === "pausing") {
-            npc.vx *= 0.82;
-            npc.vz *= 0.82;
-            npc.phase += dt * 1.8;
-            npc.waitTimer -= dt;
-            if (npc.waitTimer <= 0) {
-              if (npc.state === "chatting") {
-                npc.chatPartnerId = null;
-                npc.activeLine = null;
-                npc.chatCooldown = rand(14, 24);
-              }
-              pickNextRoute(npc, w);
-            }
-            return;
-          }
-
-          const dx = npc.targetX - npc.x;
-          const dz = npc.targetZ - npc.z;
-          const dist = Math.hypot(dx, dz * 260);
-
-          if (dist < 14) {
-            if (npc.x < -100 || npc.x > w + 100) {
-              // Park this walker in off-screen reserve and wake a fresh character from the 32-NPC pool!
-              npc.x = -9999;
-              npc.state = "pausing";
-              npc.waitTimer = 99999;
-              npc.visitedPoi = false;
-
-              const reserves = npcs.filter(
-                (n) => n.def.behavior !== "ambient" && n.x < -5000 && n !== npc
-              );
-              if (reserves.length > 0) {
-                const next = reserves[Math.floor(Math.random() * reserves.length)];
-                const [minZ, maxZ] = next.def.zRange;
-                const fromLeft = Math.random() < 0.5;
-                next.x = fromLeft ? -140 : w + 140;
-                next.z = rand(minZ, maxZ);
-                next.visitedPoi = false;
-                next.speedBoost = 1;
-                next.state = "walking";
-                next.waitTimer = 0;
-                next.targetX = fromLeft ? w + 180 : -180;
-                next.targetZ = rand(minZ, maxZ);
-              }
-              return;
-            }
-            npc.state = "pausing";
-            npc.waitTimer =
-              npc.def.behavior === "customer" ? rand(2.8, 5.0) : rand(1.5, 3.2);
-            if (npc.def.behavior === "customer") npc.flip = true;
-            return;
-          }
-
-          const depthSpeedFactor = 0.72 + npc.z * 0.55;
-          const desiredSpeed =
-            npc.def.speed *
-            npc.speedBoost *
-            depthSpeedFactor *
-            Math.min(1, Math.max(0.25, dist / 70));
-          const dirX = dx / Math.max(1, Math.abs(dx) + Math.abs(dz * 260));
-          const dirZ = (dz * 260) / Math.max(1, Math.abs(dx) + Math.abs(dz * 260));
-
-          const targetVx = dirX * desiredSpeed;
-          const targetVz = (dirZ * desiredSpeed) / 260;
-
-          npc.vx += (targetVx - npc.vx) * Math.min(1, dt * 6);
-          npc.vz += (targetVz - npc.vz) * Math.min(1, dt * 6);
-
-          npc.x += npc.vx * dt;
-          npc.z += npc.vz * dt;
-          if (Math.abs(npc.vx) > 2) {
-            npc.flip = npc.vx < 0;
-          }
-          npc.phase += dt * (5.2 + npc.z * 2) * npc.speedBoost;
         });
 
-        // 2. Smart Encounter Rules (max 2 active chats, never behind Amr)
+        // 2. Update walkers (strict sequential 1->32 rotation, alternating left<->right)
+        for (let i = 0; i < walkers.length; i++) {
+          const wk = walkers[i];
+          if (pausedRef.current) continue;
+
+          if (wk.reactionTimer > 0) {
+            wk.reactionTimer -= dt;
+            if (wk.reactionTimer <= 0) wk.reactionGlyph = null;
+          }
+          if (wk.chatCooldown > 0) wk.chatCooldown -= dt;
+
+          if (wk.state === "chatting" || wk.state === "pausing") {
+            wk.vx *= 0.8;
+            wk.phase += dt * 1.6;
+            wk.waitTimer -= dt;
+            if (wk.waitTimer <= 0) {
+              wk.state = "walking";
+              wk.chatPartnerId = null;
+              wk.activeLine = null;
+              wk.chatCooldown = rand(14, 22);
+              wk.flip = wk.dir < 0;
+            }
+            continue;
+          }
+
+          const laneCfg = LANES[wk.lane];
+          const targetVx = wk.dir * wk.def.speed * laneCfg.speedMult * wk.speedBoost;
+          wk.vx += (targetVx - wk.vx) * Math.min(1, dt * 6);
+          wk.x += wk.vx * dt;
+          wk.flip = wk.dir < 0;
+          wk.phase += dt * (4.8 + wk.lane * 0.8) * wk.speedBoost;
+
+          // Exited off-screen? Replace with the next NPC in the 1->32 queue!
+          if ((wk.dir === 1 && wk.x > w + 140) || (wk.dir === -1 && wk.x < -140)) {
+            const fresh = spawnWalkerInLane(wk.lane);
+            fresh.x = fresh.dir === 1 ? -110 : w + 110;
+            walkers[i] = fresh;
+          }
+        }
+
+        // 3. Same-lane encounter rules (max 2 chats, never behind Amr)
         if (!pausedRef.current) {
-          const activeChatters = npcs.filter((n) => n.state === "chatting").length;
-          for (let i = 0; i < npcs.length; i++) {
-            const a = npcs[i];
+          const activeChatters = walkers.filter((n) => n.state === "chatting").length;
+          for (let i = 0; i < walkers.length; i++) {
+            const a = walkers[i];
             if (
               a.state !== "walking" ||
               a.chatCooldown > 0 ||
-              a.x < w * 0.14 ||
-              a.x > w * 0.86 ||
+              a.x < w * 0.16 ||
+              a.x > w * 0.84 ||
               (a.x > w * 0.36 && a.x < w * 0.64)
             ) {
               continue;
             }
-            for (let j = i + 1; j < npcs.length; j++) {
-              const b = npcs[j];
-              if (b.state !== "walking" || b.chatCooldown > 0) continue;
-
+            for (let j = i + 1; j < walkers.length; j++) {
+              const b = walkers[j];
+              if (
+                b.state !== "walking" ||
+                b.chatCooldown > 0 ||
+                a.lane !== b.lane // Only interact with someone in the same depth lane!
+              ) {
+                continue;
+              }
               const xDist = Math.abs(a.x - b.x);
-              const zDist = Math.abs(a.z - b.z);
-              if (xDist < 34 || xDist > 80 || zDist > 0.09) continue;
+              if (xDist < 36 || xDist > 80) continue;
 
               const ruleAB = a.meta?.encounterRules?.find(
                 (r) => r.targetNpcId === b.meta?.npcId
@@ -554,11 +375,9 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
               );
               const rule = ruleAB || ruleBA;
 
-              // Execute specific rule action!
               if (rule?.action === "avoid_turn_around") {
                 const avoider = ruleAB ? a : b;
-                const other = ruleAB ? b : a;
-                avoider.targetX = avoider.x < other.x ? -180 : w + 180;
+                avoider.dir = avoider.dir === 1 ? -1 : 1;
                 avoider.speedBoost = 1.45;
                 avoider.reactionGlyph = "!";
                 avoider.reactionTimer = 1.4;
@@ -569,36 +388,19 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
               if (rule?.action === "wave_and_pass") {
                 a.reactionGlyph = "👋";
                 b.reactionGlyph = "👋";
-                a.reactionTimer = 1.6;
-                b.reactionTimer = 1.6;
+                a.reactionTimer = 1.5;
+                b.reactionTimer = 1.5;
                 a.chatCooldown = 12;
                 b.chatCooldown = 12;
                 break;
               }
 
-              if (rule?.action === "walk_together") {
-                const goRight = a.targetX > a.x;
-                const sharedTargetX = goRight ? w + 180 : -180;
-                a.targetX = sharedTargetX;
-                b.targetX = sharedTargetX;
-                b.targetZ = a.z;
-                a.chatCooldown = 16;
-                b.chatCooldown = 16;
-                break;
-              }
-
-              // Chat rule or connected/social neighbors
-              const isConnected =
-                rule?.action === "chat" ||
-                (a.meta?.connections?.includes(b.meta?.npcId ?? "") ?? false) ||
-                (a.def.social && b.def.social);
-
-              if (isConnected && activeChatters < 4) {
-                const chatDuration = rand(3.8, 5.6);
+              if (activeChatters < 4 && (rule?.action === "chat" || (a.def.social && b.def.social))) {
+                const dur = rand(3.5, 5.0);
                 a.state = "chatting";
                 b.state = "chatting";
-                a.waitTimer = chatDuration;
-                b.waitTimer = chatDuration;
+                a.waitTimer = dur;
+                b.waitTimer = dur;
                 a.chatPartnerId = b.def.id;
                 b.chatPartnerId = a.def.id;
                 a.flip = a.x > b.x;
@@ -615,60 +417,92 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           }
         }
 
-        // 3. Ambient particles
-        for (let i = particles.length - 1; i >= 0; i--) {
-          const p = particles[i];
-          if (!pausedRef.current) {
-            p.life += dt;
-            p.x += p.vx * dt;
-            p.y += p.vy * dt;
+        // 4. Draw Lane 0 (far back) & Lane 1 (midground) + Ambient Slots on backCanvas
+        const drawWalker = (ctx: CanvasRenderingContext2D, wk: LiveWalker) => {
+          const laneCfg = LANES[wk.lane];
+          const isMoving = wk.state === "walking";
+          const frameIdx =
+            wk.imgs.length > 1
+              ? isMoving
+                ? Math.floor(wk.phase * 0.85) % wk.imgs.length
+                : 1
+              : 0;
+          const img = wk.imgs[frameIdx];
+          if (!img || !img.complete || !img.naturalWidth) return;
+
+          const targetH = h * laneCfg.heightRatio * (wk.def.sizeScale ?? 1);
+          const targetW = (img.naturalWidth / img.naturalHeight) * targetH;
+          const groundY = h * laneCfg.groundRatio;
+
+          ctx.save();
+          ctx.globalAlpha = laneCfg.alpha;
+          ctx.translate(wk.x, groundY);
+          if (wk.flip) ctx.scale(-1, 1);
+          ctx.drawImage(img, -targetW * 0.5, -targetH, targetW, targetH);
+          ctx.restore();
+
+          if (wk.reactionGlyph && wk.reactionTimer > 0) {
+            ctx.save();
+            ctx.font = "700 14px system-ui, sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillStyle = "#141414";
+            ctx.fillText(wk.reactionGlyph, wk.x, groundY - targetH - 8);
+            ctx.restore();
           }
-          if (p.life >= p.maxLife) {
-            particles.splice(i, 1);
-            continue;
+        };
+
+        // Far back lane (Lane 0)
+        walkers.filter((wk) => wk.lane === 0).forEach((wk) => drawWalker(bCtx, wk));
+
+        // Ambient vignettes (10s hold + smooth slide/fade toward screen edge)
+        ambientSlots.forEach((slot) => {
+          const laneCfg = LANES[slot.lane];
+          const frameIdx = Math.floor(slot.phase) % Math.max(1, slot.imgs.length);
+          const img = slot.imgs[frameIdx];
+          if (!img || !img.complete || !img.naturalWidth) return;
+
+          let alpha = laneCfg.alpha;
+          let slideOffset = 0;
+          if (slot.timer < 1.0) {
+            // Entering from edge
+            const t = slot.timer;
+            alpha *= t;
+            slideOffset = (1 - t) * (slot.side === "left" ? -50 : 50);
+          } else if (slot.timer > 11.0) {
+            // Vanishing toward screen exit
+            const t = Math.min(1, slot.timer - 11.0);
+            alpha *= 1 - t;
+            slideOffset = t * (slot.side === "left" ? -60 : 60);
           }
-          const t = p.life / p.maxLife;
-          const alpha = Math.sin(t * Math.PI) * (p.kind === "music" ? 0.55 : 0.22);
+
+          const targetH = h * laneCfg.heightRatio * (slot.def.sizeScale ?? 1);
+          const targetW = (img.naturalWidth / img.naturalHeight) * targetH;
+          const groundY = h * laneCfg.groundRatio;
+          const x = slot.xRatio * w + slideOffset;
+
           bCtx.save();
-          bCtx.globalAlpha = alpha;
-          if (p.kind === "music" && p.glyph) {
-            bCtx.fillStyle = "#141414";
-            bCtx.font = `${p.size}px sans-serif`;
-            bCtx.fillText(p.glyph, p.x, p.y);
-          } else {
-            bCtx.fillStyle = "#555";
-            bCtx.beginPath();
-            bCtx.arc(p.x, p.y, p.size * (0.7 + t * 0.8), 0, Math.PI * 2);
-            bCtx.fill();
-          }
+          bCtx.globalAlpha = Math.max(0, alpha);
+          bCtx.translate(x, groundY);
+          if (slot.flip) bCtx.scale(-1, 1);
+          bCtx.drawImage(img, -targetW * 0.5, -targetH, targetW, targetH);
           bCtx.restore();
-        }
-
-        // 4. Depth-sorted rendering
-        const backNpcs = npcs.filter((n) => n.z < 0.62).sort((a, b) => a.z - b.z);
-        const frontNpcs = npcs.filter((n) => n.z >= 0.62).sort((a, b) => a.z - b.z);
-
-        backNpcs.forEach((npc) => {
-          const gy = groundForZ(npc.z);
-          const th = heightForZ(npc.z, npc.def.sizeScale ?? 1);
-          drawNpc(bCtx, npc, gy, th, 0.82 + npc.z * 0.18);
         });
 
-        frontNpcs.forEach((npc) => {
-          const gy = groundForZ(npc.z);
-          const th = heightForZ(npc.z, npc.def.sizeScale ?? 1);
-          drawNpc(fCtx, npc, gy, th, 0.92 + npc.z * 0.08);
-        });
+        // Midground lane (Lane 1)
+        walkers.filter((wk) => wk.lane === 1).forEach((wk) => drawWalker(bCtx, wk));
 
-        // 5. Speech bubbles always on front layer (max 2, never overlapping)
+        // Foreground lane (Lane 2) on frontCanvas
+        walkers.filter((wk) => wk.lane === 2).forEach((wk) => drawWalker(fCtx, wk));
+
+        // 5. Speech bubbles on front layer (max 2, never overlapping)
         const drawnPairs = new Set<string>();
         const bubbleXs: number[] = [];
-        npcs.forEach((a) => {
+        walkers.forEach((a) => {
           if (drawnPairs.size >= 2) return;
           if (a.state !== "chatting" || !a.chatPartnerId) return;
           const pairKey = [a.def.id, a.chatPartnerId].sort().join("|");
           if (drawnPairs.has(pairKey)) return;
-          const b = npcs.find((n) => n.def.id === a.chatPartnerId);
+          const b = walkers.find((n) => n.def.id === a.chatPartnerId);
           if (!b || b.state !== "chatting") return;
 
           const midX = (a.x + b.x) * 0.5;
@@ -676,9 +510,9 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           drawnPairs.add(pairKey);
           bubbleXs.push(midX);
 
-          const avgZ = (a.z + b.z) * 0.5;
-          const gy = groundForZ(avgZ);
-          const th = heightForZ(avgZ, 0.94);
+          const laneCfg = LANES[a.lane];
+          const gy = h * laneCfg.groundRatio;
+          const th = h * laneCfg.heightRatio;
           drawSpeechBubble(fCtx, midX, gy - th - 14, now / 1000, a.activeLine || b.activeLine, w);
         });
       }
