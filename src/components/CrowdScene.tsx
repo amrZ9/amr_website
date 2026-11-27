@@ -78,9 +78,25 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
     const initialW = Math.max(scene.getBoundingClientRect().width, 1200);
     const movers = STREET_NPCS.filter((n) => n.behavior !== "ambient");
 
+    // Pick 1 random animated ambient vignette per POI slot (foulCart, oudCorner, rightBench) so the street feels fresh every visit without overcrowding
+    const ambientSlots = ["foulCart", "oudCorner", "rightBench"];
+    const activeAmbientIds = new Set<string>();
+    ambientSlots.forEach((slot) => {
+      const candidates = STREET_NPCS.filter(
+        (n) => n.behavior === "ambient" && n.homePoi === slot
+      );
+      if (candidates.length > 0) {
+        const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+        activeAmbientIds.add(chosen.id);
+      }
+    });
+    const activeDefs = STREET_NPCS.filter(
+      (n) => n.behavior !== "ambient" || activeAmbientIds.has(n.id)
+    );
+
     // Build live NPCs scattered across the footer (some on-screen, some staggered off-screen)
     let moverIdx = 0;
-    const npcs: LiveNpc[] = STREET_NPCS.map((def, idx) => {
+    const npcs: LiveNpc[] = activeDefs.map((def, idx) => {
       const imgs = def.frames.map((src) => {
         const img = new Image();
         img.src = src;
@@ -231,9 +247,11 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       const isMoving = npc.state === "walking" && speedMag > 4;
       const hasWalkCycle = npc.imgs.length > 1;
       const frameIdx = hasWalkCycle
-        ? isMoving
-          ? Math.floor(npc.phase * 0.85) % npc.imgs.length
-          : 1 // Planted standing pose when pausing or chatting
+        ? npc.state === "ambient"
+          ? Math.floor(npc.phase * 1.6) % npc.imgs.length // Relaxed ~2.5 FPS ambient action loop
+          : isMoving
+            ? Math.floor(npc.phase * 0.85) % npc.imgs.length
+            : 1 // Planted standing pose when pausing or chatting
         : 0;
       const img = npc.imgs[frameIdx];
       if (!img || !img.complete || !img.naturalWidth) return;
