@@ -116,9 +116,9 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         };
       }
 
-      // Scatter across a wide span (-0.45W to 1.45W) so ~12 are visible and others enter naturally
+      // Scatter across a wider staging span so ~9-11 are on-screen at once (never overcrowded)
       const slot = moverIdx++;
-      const startX = ((slot + 0.5) / movers.length) * (initialW * 1.9) - initialW * 0.45;
+      const startX = ((slot + 0.5) / movers.length) * (initialW * 2.8) - initialW * 0.9;
       const startZ = rand(minZ, maxZ);
       const goRight = slot % 2 === 0;
       const targetX = goRight ? initialW + 180 : -180;
@@ -233,7 +233,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       const frameIdx = hasWalkCycle
         ? isMoving
           ? Math.floor(npc.phase * 0.85) % npc.imgs.length
-          : 2 // Natural standing pose when pausing or chatting
+          : 1 // Planted standing pose when pausing or chatting
         : 0;
       const img = npc.imgs[frameIdx];
       if (!img || !img.complete || !img.naturalWidth) return;
@@ -359,7 +359,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
               npc.z = rand(minZ, maxZ);
               npc.visitedPoi = false;
               npc.state = "pausing";
-              npc.waitTimer = rand(0.8, 3.2);
+              npc.waitTimer = rand(2.5, 7.5);
               return;
             }
             npc.state = "pausing";
