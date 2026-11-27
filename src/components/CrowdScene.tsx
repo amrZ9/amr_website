@@ -7,11 +7,38 @@ import {
   STREET_POIS,
   type NpcDefinition,
 } from "@/data/streetWorld";
+import neighborhoodWorld from "@/data/neighborhoodWorld.json";
 
 type NpcState = "walking" | "pausing" | "chatting" | "ambient";
 
+interface EncounterRule {
+  targetNpcId: string;
+  action:
+    | "chat"
+    | "walk_together"
+    | "avoid_turn_around"
+    | "wave_and_pass"
+    | "hang_out_at_spot";
+  reason: string;
+}
+
+interface WorldNpcMeta {
+  npcId: string;
+  spriteId: string;
+  name: string;
+  story: string;
+  topics: string[];
+  connections: string[];
+  encounterRules: EncounterRule[];
+}
+
+const WORLD_BY_SPRITE = new Map<string, WorldNpcMeta>(
+  (neighborhoodWorld.npcs as WorldNpcMeta[]).map((n) => [n.spriteId, n])
+);
+
 interface LiveNpc {
   def: NpcDefinition;
+  meta?: WorldNpcMeta;
   imgs: HTMLImageElement[];
   x: number;
   z: number;
@@ -23,6 +50,10 @@ interface LiveNpc {
   waitTimer: number;
   chatCooldown: number;
   chatPartnerId: string | null;
+  activeLine: string | null;
+  reactionGlyph: string | null;
+  reactionTimer: number;
+  speedBoost: number;
   phase: number;
   flip: boolean;
   visitedPoi: boolean;
@@ -78,7 +109,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
     const initialW = Math.max(scene.getBoundingClientRect().width, 1200);
     const movers = STREET_NPCS.filter((n) => n.behavior !== "ambient");
 
-    // Pick 1 random animated ambient vignette per POI slot (foulCart, oudCorner, rightBench) so the street feels fresh every visit without overcrowding
+    // Pick 1 random animated ambient vignette per POI slot (foulCart, oudCorner, rightBench)
     const ambientSlots = ["foulCart", "oudCorner", "rightBench"];
     const activeAmbientIds = new Set<string>();
     ambientSlots.forEach((slot) => {
@@ -94,9 +125,9 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       (n) => n.behavior !== "ambient" || activeAmbientIds.has(n.id)
     );
 
-    // Build live NPCs scattered across the footer (some on-screen, some staggered off-screen)
     let moverIdx = 0;
     const npcs: LiveNpc[] = activeDefs.map((def, idx) => {
+      const meta = WORLD_BY_SPRITE.get(def.id);
       const imgs = def.frames.map((src) => {
         const img = new Image();
         img.src = src;
@@ -114,6 +145,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         const poi = def.homePoi ? STREET_POIS[def.homePoi] : undefined;
         return {
           def,
+          meta,
           imgs,
           x: (poi ? poi.xRatio : 0.15) * initialW,
           z: poi ? poi.z : minZ,
@@ -125,6 +157,10 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           waitTimer: 0,
           chatCooldown: 999,
           chatPartnerId: null,
+          activeLine: null,
+          reactionGlyph: null,
+          reactionTimer: 0,
+          speedBoost: 1,
           phase: idx * 1.3,
           flip: Boolean(def.defaultFlip),
           visitedPoi: false,
@@ -132,15 +168,16 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         };
       }
 
-      // Scatter across a wider staging span so ~9-11 are on-screen at once (never overcrowded)
       const slot = moverIdx++;
-      const startX = ((slot + 0.5) / movers.length) * (initialW * 2.8) - initialW * 0.9;
+      const startX =
+        ((slot + 0.5) / movers.length) * (initialW * 2.8) - initialW * 0.9;
       const startZ = rand(minZ, maxZ);
       const goRight = slot % 2 === 0;
       const targetX = goRight ? initialW + 180 : -180;
 
       return {
         def,
+        meta,
         imgs,
         x: startX,
         z: startZ,
@@ -152,6 +189,10 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         waitTimer: 0,
         chatCooldown: rand(2, 8),
         chatPartnerId: null,
+        activeLine: null,
+        reactionGlyph: null,
+        reactionTimer: 0,
+        speedBoost: 1,
         phase: slot * 1.7,
         flip: !goRight,
         visitedPoi: false,
@@ -163,6 +204,24 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
 
     const pickNextRoute = (npc: LiveNpc, w: number) => {
       const [minZ, maxZ] = npc.def.zRange;
+      npc.speedBoost = 1;
+
+      // Check if this NPC has a hang_out_at_spot rule pointing to an active ambient spot!
+      const hangRule = npc.meta?.encounterRules?.find(
+        (r) => r.action === "hang_out_at_spot"
+      );
+      if (hangRule && !npc.visitedPoi) {
+        const spot = npcs.find(
+          (n) => n.state === "ambient" && n.meta?.npcId === hangRule.targetNpcId
+        );
+        if (spot) {
+          npc.targetX = spot.x + (spot.x < w * 0.5 ? 44 : -44);
+          npc.targetZ = Math.min(0.58, spot.z + 0.04);
+          npc.visitedPoi = true;
+          npc.state = "walking";
+          return;
+        }
+      }
 
       if (
         npc.def.behavior === "customer" &&
@@ -178,7 +237,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         return;
       }
 
-      if (npc.def.behavior === "stroller" && Math.random() < 0.35) {
+      if (npc.def.behavior === "stroller" && Math.random() < 0.3) {
         const leftZone = Math.random() < 0.5;
         npc.targetX = leftZone ? rand(w * 0.22, w * 0.39) : rand(w * 0.61, w * 0.80);
         npc.targetZ = rand(minZ, maxZ);
@@ -210,28 +269,53 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       ctx: CanvasRenderingContext2D,
       cx: number,
       cy: number,
-      t: number
+      t: number,
+      text: string | null,
+      maxWidth: number
     ) => {
       ctx.save();
-      ctx.translate(cx, cy - Math.sin(t * 2.5) * 2);
-      // Clean comic pill bubble
-      const bw = 30;
-      const bh = 16;
-      ctx.fillStyle = "#ffffff";
-      ctx.strokeStyle = "#141414";
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.roundRect(-bw / 2, -bh / 2, bw, bh, 8);
-      ctx.fill();
-      ctx.stroke();
+      const floatY = cy - Math.sin(t * 2.5) * 2;
+      if (text) {
+        ctx.font = "600 11px 'Space Grotesk', system-ui, sans-serif";
+        const shortText = text.length > 52 ? text.slice(0, 49).trim() + "…" : text;
+        const padX = 10;
+        const metrics = ctx.measureText(shortText);
+        const bw = Math.min(maxWidth, metrics.width + padX * 2);
+        const bh = 24;
+        const clampedX = Math.max(bw / 2 + 8, Math.min(maxWidth - bw / 2 - 8, cx));
 
-      // 3 animated typing/chat dots
-      for (let d = 0; d < 3; d++) {
-        const bounce = Math.sin(t * 5 - d * 0.9) > 0.2 ? -1.4 : 0;
-        ctx.fillStyle = "#141414";
+        ctx.translate(clampedX, floatY);
+        ctx.fillStyle = "#ffffff";
+        ctx.strokeStyle = "#141414";
+        ctx.lineWidth = 1.3;
         ctx.beginPath();
-        ctx.arc(-6 + d * 6, bounce, 1.6, 0, Math.PI * 2);
+        ctx.roundRect(-bw / 2, -bh / 2, bw, bh, 12);
         ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#141414";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(shortText, 0, 0.5, bw - padX * 1.5);
+      } else {
+        ctx.translate(cx, floatY);
+        const bw = 30;
+        const bh = 16;
+        ctx.fillStyle = "#ffffff";
+        ctx.strokeStyle = "#141414";
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.roundRect(-bw / 2, -bh / 2, bw, bh, 8);
+        ctx.fill();
+        ctx.stroke();
+
+        for (let d = 0; d < 3; d++) {
+          const bounce = Math.sin(t * 5 - d * 0.9) > 0.2 ? -1.4 : 0;
+          ctx.fillStyle = "#141414";
+          ctx.beginPath();
+          ctx.arc(-6 + d * 6, bounce, 1.6, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
       ctx.restore();
     };
@@ -248,17 +332,15 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       const hasWalkCycle = npc.imgs.length > 1;
       const frameIdx = hasWalkCycle
         ? npc.state === "ambient"
-          ? Math.floor(npc.phase * 1.6) % npc.imgs.length // Relaxed ~2.5 FPS ambient action loop
+          ? Math.floor(npc.phase * 1.6) % npc.imgs.length
           : isMoving
             ? Math.floor(npc.phase * 0.85) % npc.imgs.length
-            : 1 // Planted standing pose when pausing or chatting
+            : 1
         : 0;
       const img = npc.imgs[frameIdx];
       if (!img || !img.complete || !img.naturalWidth) return;
 
       const targetW = (img.naturalWidth / img.naturalHeight) * targetH;
-
-      // Subtle conversational nod/breathing when chatting or idle
       const breathScaleY =
         npc.state === "chatting"
           ? 1 + Math.sin(npc.phase * 2.4) * 0.012
@@ -272,6 +354,16 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       ctx.scale(npc.flip ? -1 : 1, breathScaleY);
       ctx.drawImage(img, -targetW * 0.5, -targetH, targetW, targetH);
       ctx.restore();
+
+      // Quick reaction glyph (! or 👋)
+      if (npc.reactionGlyph && npc.reactionTimer > 0) {
+        ctx.save();
+        ctx.font = "700 14px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#141414";
+        ctx.fillText(npc.reactionGlyph, npc.x, groundY - targetH - 8);
+        ctx.restore();
+      }
     };
 
     let last = 0;
@@ -300,6 +392,11 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
 
         // 1. Update NPCs
         npcs.forEach((npc) => {
+          if (npc.reactionTimer > 0 && !pausedRef.current) {
+            npc.reactionTimer -= dt;
+            if (npc.reactionTimer <= 0) npc.reactionGlyph = null;
+          }
+
           if (npc.def.behavior === "ambient") {
             const poi = npc.def.homePoi ? STREET_POIS[npc.def.homePoi] : undefined;
             if (poi) {
@@ -346,7 +443,6 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           }
 
           if (pausedRef.current) return;
-
           if (npc.chatCooldown > 0) npc.chatCooldown -= dt;
 
           if (npc.state === "chatting" || npc.state === "pausing") {
@@ -357,6 +453,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
             if (npc.waitTimer <= 0) {
               if (npc.state === "chatting") {
                 npc.chatPartnerId = null;
+                npc.activeLine = null;
                 npc.chatCooldown = rand(14, 24);
               }
               pickNextRoute(npc, w);
@@ -364,7 +461,6 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
             return;
           }
 
-          // Walking toward (targetX, targetZ)
           const dx = npc.targetX - npc.x;
           const dz = npc.targetZ - npc.z;
           const dist = Math.hypot(dx, dz * 260);
@@ -390,6 +486,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           const depthSpeedFactor = 0.72 + npc.z * 0.55;
           const desiredSpeed =
             npc.def.speed *
+            npc.speedBoost *
             depthSpeedFactor *
             Math.min(1, Math.max(0.25, dist / 70));
           const dirX = dx / Math.max(1, Math.abs(dx) + Math.abs(dz * 260));
@@ -406,52 +503,100 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           if (Math.abs(npc.vx) > 2) {
             npc.flip = npc.vx < 0;
           }
-          npc.phase += dt * (5.2 + npc.z * 2);
+          npc.phase += dt * (5.2 + npc.z * 2) * npc.speedBoost;
         });
 
-        // 2. Social encounter check: if two social walkers meet, they stop & chat!
+        // 2. Smart Encounter Rules (from neighborhoodWorld.json!)
         if (!pausedRef.current) {
           for (let i = 0; i < npcs.length; i++) {
             const a = npcs[i];
             if (
-              !a.def.social ||
               a.state !== "walking" ||
               a.chatCooldown > 0 ||
-              a.x < w * 0.16 ||
-              a.x > w * 0.84 ||
-              (a.x > w * 0.43 && a.x < w * 0.57) // Keep Amr's center clear
+              a.x < w * 0.14 ||
+              a.x > w * 0.86 ||
+              (a.x > w * 0.43 && a.x < w * 0.57)
             ) {
               continue;
             }
             for (let j = i + 1; j < npcs.length; j++) {
               const b = npcs[j];
-              if (
-                !b.def.social ||
-                b.state !== "walking" ||
-                b.chatCooldown > 0
-              ) {
-                continue;
-              }
+              if (b.state !== "walking" || b.chatCooldown > 0) continue;
+
               const xDist = Math.abs(a.x - b.x);
               const zDist = Math.abs(a.z - b.z);
-              if (xDist > 34 && xDist < 72 && zDist < 0.08) {
-                const chatDuration = rand(3.5, 5.5);
+              if (xDist < 34 || xDist > 80 || zDist > 0.09) continue;
+
+              const ruleAB = a.meta?.encounterRules?.find(
+                (r) => r.targetNpcId === b.meta?.npcId
+              );
+              const ruleBA = b.meta?.encounterRules?.find(
+                (r) => r.targetNpcId === a.meta?.npcId
+              );
+              const rule = ruleAB || ruleBA;
+
+              // Execute specific rule action!
+              if (rule?.action === "avoid_turn_around") {
+                const avoider = ruleAB ? a : b;
+                const other = ruleAB ? b : a;
+                avoider.targetX = avoider.x < other.x ? -180 : w + 180;
+                avoider.speedBoost = 1.45;
+                avoider.reactionGlyph = "!";
+                avoider.reactionTimer = 1.4;
+                avoider.chatCooldown = 14;
+                break;
+              }
+
+              if (rule?.action === "wave_and_pass") {
+                a.reactionGlyph = "👋";
+                b.reactionGlyph = "👋";
+                a.reactionTimer = 1.6;
+                b.reactionTimer = 1.6;
+                a.chatCooldown = 12;
+                b.chatCooldown = 12;
+                break;
+              }
+
+              if (rule?.action === "walk_together") {
+                const goRight = a.targetX > a.x;
+                const sharedTargetX = goRight ? w + 180 : -180;
+                a.targetX = sharedTargetX;
+                b.targetX = sharedTargetX;
+                b.targetZ = a.z;
+                a.chatCooldown = 16;
+                b.chatCooldown = 16;
+                break;
+              }
+
+              // Chat rule or connected/social neighbors
+              const isConnected =
+                rule?.action === "chat" ||
+                (a.meta?.connections?.includes(b.meta?.npcId ?? "") ?? false) ||
+                (a.def.social && b.def.social);
+
+              if (isConnected) {
+                const chatDuration = rand(3.8, 5.6);
                 a.state = "chatting";
                 b.state = "chatting";
                 a.waitTimer = chatDuration;
                 b.waitTimer = chatDuration;
                 a.chatPartnerId = b.def.id;
                 b.chatPartnerId = a.def.id;
-                // Face each other!
                 a.flip = a.x > b.x;
                 b.flip = b.x > a.x;
+                const topics = a.meta?.topics?.length
+                  ? a.meta.topics
+                  : b.meta?.topics ?? [];
+                a.activeLine = topics.length
+                  ? topics[Math.floor(Math.random() * topics.length)]
+                  : null;
                 break;
               }
             }
           }
         }
 
-        // 3. Update & draw ambient particles
+        // 3. Ambient particles
         for (let i = particles.length - 1; i >= 0; i--) {
           const p = particles[i];
           if (!pausedRef.current) {
@@ -496,7 +641,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           drawNpc(fCtx, npc, gy, th, 0.92 + npc.z * 0.08);
         });
 
-        // 5. Draw speech bubbles above chatting pairs (once per pair)
+        // 5. Speech bubbles with real Haret El-Nakheel dialogue!
         const drawnPairs = new Set<string>();
         npcs.forEach((a) => {
           if (a.state !== "chatting" || !a.chatPartnerId) return;
@@ -511,7 +656,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           const gy = groundForZ(avgZ);
           const th = heightForZ(avgZ, 0.94);
           const ctx = avgZ < 0.62 ? bCtx : fCtx;
-          drawSpeechBubble(ctx, midX, gy - th - 12, now / 1000);
+          drawSpeechBubble(ctx, midX, gy - th - 14, now / 1000, a.activeLine || b.activeLine, w);
         });
       }
 

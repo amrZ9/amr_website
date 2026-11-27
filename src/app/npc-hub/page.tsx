@@ -4,16 +4,36 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Download, Copy, Check, RotateCcw, ArrowLeft, Users } from "lucide-react";
 import { STREET_NPCS } from "@/data/streetWorld";
+import neighborhoodWorld from "@/data/neighborhoodWorld.json";
 
 interface NpcProfile {
   name: string;
   story: string;
   connections: string[]; // up to 3 NPC IDs (e.g. "NPC-04")
+  topics?: string[];
 }
 
 type HubState = Record<string, NpcProfile>;
 
-const STORAGE_KEY = "amrz9_npc_hub_v1";
+const STORAGE_KEY = "amrz9_npc_hub_v2";
+
+const DEFAULT_HUB: HubState = Object.fromEntries(
+  (neighborhoodWorld.npcs as Array<{
+    npcId: string;
+    name: string;
+    story: string;
+    connections: string[];
+    topics?: string[];
+  }>).map((n) => [
+    n.npcId,
+    {
+      name: n.name ?? "",
+      story: n.story ?? "",
+      connections: n.connections ?? [],
+      topics: n.topics ?? [],
+    },
+  ])
+);
 
 export default function NpcHubPage() {
   const roster = useMemo(
@@ -29,7 +49,7 @@ export default function NpcHubPage() {
     []
   );
 
-  const [hub, setHub] = useState<HubState>({});
+  const [hub, setHub] = useState<HubState>(DEFAULT_HUB);
   const [filter, setFilter] = useState<"all" | "ambient" | "stroller" | "customer">("all");
   const [search, setSearch] = useState("");
   const [copied, setCopied] = useState(false);
