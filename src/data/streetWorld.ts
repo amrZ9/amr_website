@@ -1,6 +1,6 @@
 export type NpcBehaviorType =
-  | "stroller"   // Walks across the street, occasionally pauses to look around
-  | "customer"   // Walks to the foul cart, waits/chats there, then walks away
+  | "stroller"   // Walks across the street, can meet others to chat or pause
+  | "customer"   // Visits the foul cart, waits there, then strolls away
   | "cruiser"    // Jogger moving faster across the street
   | "ambient";   // Living street vignette (foul cart, oud player, newspaper reader)
 
@@ -28,6 +28,8 @@ export interface NpcDefinition {
   defaultFlip?: boolean;
   /** Relative size multiplier */
   sizeScale?: number;
+  /** Whether this NPC can stop to chat when meeting another NPC */
+  social?: boolean;
 }
 
 const walkFrames = (slug: string, count = 6) =>
@@ -42,8 +44,28 @@ export const STREET_POIS: Record<string, PointOfInterest> = {
   oudCorner: { id: "oudCorner", xRatio: 0.25, z: 0.24 },
   centerBack: { id: "centerBack", xRatio: 0.50, z: 0.28 },
   rightBench: { id: "rightBench", xRatio: 0.87, z: 0.34 },
-  catCorner: { id: "catCorner", xRatio: 0.77, z: 0.22 },
 };
+
+// 22 animated characters from Downloads/footor, scattered across depths & behaviors
+const CAST_22: NpcDefinition[] = Array.from({ length: 22 }, (_, i) => {
+  const num = String(i + 1).padStart(2, "0");
+  const isCustomer = i % 6 === 0;
+  const minZ = 0.24 + (i % 5) * 0.08;
+  const maxZ = Math.min(0.66, minZ + 0.14);
+  const speed = 22 + (i % 5) * 3.5;
+
+  return {
+    id: `cast-${num}`,
+    name: `Street Character ${num}`,
+    behavior: isCustomer ? "customer" : "stroller",
+    frames: walkFrames(`cast-${num}`),
+    speed,
+    zRange: [minZ, maxZ] as [number, number],
+    homePoi: isCustomer ? "foulQueue" : undefined,
+    sizeScale: 0.94,
+    social: i % 2 === 0, // Half of the cast will stop & chat when they meet!
+  };
+});
 
 export const STREET_NPCS: NpcDefinition[] = [
   // --- Ambient living vignettes ---
@@ -81,102 +103,6 @@ export const STREET_NPCS: NpcDefinition[] = [
     sizeScale: 0.92,
   },
 
-  // --- Customers who visit the Foul Cart & stroll away ---
-  {
-    id: "student-backpack",
-    name: "Backpack Student",
-    behavior: "customer",
-    frames: walkFrames("backpack-walk"),
-    speed: 30,
-    zRange: [0.34, 0.52],
-    homePoi: "foulQueue",
-    sizeScale: 0.95,
-  },
-  {
-    id: "coffee-girl",
-    name: "Coffee Walker",
-    behavior: "customer",
-    frames: walkFrames("coffee-walk"),
-    speed: 28,
-    zRange: [0.32, 0.48],
-    homePoi: "foulQueue",
-    sizeScale: 0.94,
-  },
-  {
-    id: "apron-uncle",
-    name: "Cafe Uncle",
-    behavior: "customer",
-    frames: walkFrames("apron-walk"),
-    speed: 26,
-    zRange: [0.36, 0.50],
-    homePoi: "foulQueue",
-    sizeScale: 0.96,
-  },
-
-  // --- Natural strollers (6-frame walk cycles) ---
-  {
-    id: "striped-girl",
-    name: "Tote Bag Stroller",
-    behavior: "stroller",
-    frames: walkFrames("striped-walk"),
-    speed: 30,
-    zRange: [0.48, 0.66],
-    sizeScale: 0.96,
-  },
-  {
-    id: "hijabi-books",
-    name: "Student with Books",
-    behavior: "stroller",
-    frames: walkFrames("books-walk"),
-    speed: 29,
-    zRange: [0.40, 0.58],
-    sizeScale: 0.94,
-  },
-  {
-    id: "nubian-woman",
-    name: "Traditional Dress Stroller",
-    behavior: "stroller",
-    frames: walkFrames("nubian-walk"),
-    speed: 27,
-    zRange: [0.30, 0.48],
-    sizeScale: 0.95,
-  },
-  {
-    id: "reading-hijabi",
-    name: "Reading Student",
-    behavior: "stroller",
-    frames: walkFrames("reading-walk"),
-    speed: 24,
-    zRange: [0.44, 0.62],
-    sizeScale: 0.94,
-  },
-  {
-    id: "briefcase-man",
-    name: "Office Commuter",
-    behavior: "stroller",
-    frames: walkFrames("briefcase-walk"),
-    speed: 34,
-    zRange: [0.38, 0.58],
-    sizeScale: 0.96,
-  },
-  {
-    id: "elder-cane",
-    name: "Elder with Cane",
-    behavior: "stroller",
-    frames: walkFrames("elder-walk"),
-    speed: 18,
-    zRange: [0.25, 0.42],
-    sizeScale: 0.95,
-  },
-
-  // --- Fast runner (jogger) ---
-  {
-    id: "jogger-girl",
-    name: "Morning Jogger",
-    behavior: "cruiser",
-    frames: walkFrames("jogger-run"),
-    speed: 78,
-    zRange: [0.46, 0.56],
-    sizeScale: 0.94,
-  },
+  // --- All 22 animated walking characters ---
+  ...CAST_22,
 ];

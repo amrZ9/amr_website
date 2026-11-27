@@ -8,7 +8,7 @@ import {
   type NpcDefinition,
 } from "@/data/streetWorld";
 
-type NpcState = "walking" | "pausing" | "ambient";
+type NpcState = "walking" | "pausing" | "chatting" | "ambient";
 
 interface LiveNpc {
   def: NpcDefinition;
@@ -21,6 +21,8 @@ interface LiveNpc {
   vz: number;
   state: NpcState;
   waitTimer: number;
+  chatCooldown: number;
+  chatPartnerId: string | null;
   phase: number;
   flip: boolean;
   visitedPoi: boolean;
@@ -28,7 +30,7 @@ interface LiveNpc {
 }
 
 interface Particle {
-  kind: "steam" | "music" | "exhaust";
+  kind: "steam" | "music";
   x: number;
   y: number;
   vx: number;
@@ -73,16 +75,18 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
     let rafId = 0;
     let loadedCount = 0;
 
-    const initialW = Math.max(scene.getBoundingClientRect().width, 1000);
+    const initialW = Math.max(scene.getBoundingClientRect().width, 1200);
+    const movers = STREET_NPCS.filter((n) => n.behavior !== "ambient");
 
-    // Build live NPCs from STREET_NPCS
+    // Build live NPCs scattered across the footer (some on-screen, some staggered off-screen)
+    let moverIdx = 0;
     const npcs: LiveNpc[] = STREET_NPCS.map((def, idx) => {
       const imgs = def.frames.map((src) => {
         const img = new Image();
         img.src = src;
         img.onload = () => {
           loadedCount++;
-          if (loadedCount === Math.min(6, STREET_NPCS.length) && !dead) {
+          if (loadedCount === 12 && !dead) {
             setReady(true);
           }
         };
@@ -103,6 +107,8 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           vz: 0,
           state: "ambient",
           waitTimer: 0,
+          chatCooldown: 999,
+          chatPartnerId: null,
           phase: idx * 1.3,
           flip: Boolean(def.defaultFlip),
           visitedPoi: false,
@@ -110,13 +116,12 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         };
       }
 
+      // Scatter across a wide span (-0.45W to 1.45W) so ~12 are visible and others enter naturally
+      const slot = moverIdx++;
+      const startX = ((slot + 0.5) / movers.length) * (initialW * 1.9) - initialW * 0.45;
       const startZ = rand(minZ, maxZ);
-      const startX =
-        def.behavior === "cruiser"
-          ? -240
-          : ((idx + 0.5) / STREET_NPCS.length) * initialW;
-      const goRight = idx % 2 === 0;
-      const targetX = goRight ? initialW + 160 : -160;
+      const goRight = slot % 2 === 0;
+      const targetX = goRight ? initialW + 180 : -180;
 
       return {
         def,
@@ -129,7 +134,9 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         vz: 0,
         state: "walking",
         waitTimer: 0,
-        phase: idx * 1.9,
+        chatCooldown: rand(2, 8),
+        chatPartnerId: null,
+        phase: slot * 1.7,
         flip: !goRight,
         visitedPoi: false,
         effectTimer: rand(0.1, 0.4),
@@ -141,7 +148,6 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
     const pickNextRoute = (npc: LiveNpc, w: number) => {
       const [minZ, maxZ] = npc.def.zRange;
 
-      // Customers occasionally walk to the Foul Cart, wait there, then leave
       if (
         npc.def.behavior === "customer" &&
         !npc.visitedPoi &&
@@ -149,24 +155,21 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         STREET_POIS[npc.def.homePoi]
       ) {
         const poi = STREET_POIS[npc.def.homePoi];
-        npc.targetX = poi.xRatio * w + rand(-18, 22);
+        npc.targetX = poi.xRatio * w + rand(-16, 22);
         npc.targetZ = poi.z + rand(-0.02, 0.03);
         npc.visitedPoi = true;
         npc.state = "walking";
         return;
       }
 
-      // Strollers sometimes pick an in-scene spot to pause & look around
-      if (npc.def.behavior === "stroller" && Math.random() < 0.45) {
-        // Avoid stopping right in front of Amr's center (0.42..0.58)
+      if (npc.def.behavior === "stroller" && Math.random() < 0.35) {
         const leftZone = Math.random() < 0.5;
-        npc.targetX = leftZone ? rand(w * 0.24, w * 0.39) : rand(w * 0.61, w * 0.78);
+        npc.targetX = leftZone ? rand(w * 0.22, w * 0.39) : rand(w * 0.61, w * 0.80);
         npc.targetZ = rand(minZ, maxZ);
         npc.state = "walking";
         return;
       }
 
-      // Otherwise walk cleanly off the opposite edge and respawn
       const goRight = npc.x < w * 0.5;
       npc.targetX = goRight ? w + 180 : -180;
       npc.targetZ = rand(minZ, maxZ);
@@ -187,6 +190,36 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
     ro.observe(scene);
     resize();
 
+    const drawSpeechBubble = (
+      ctx: CanvasRenderingContext2D,
+      cx: number,
+      cy: number,
+      t: number
+    ) => {
+      ctx.save();
+      ctx.translate(cx, cy - Math.sin(t * 2.5) * 2);
+      // Clean comic pill bubble
+      const bw = 30;
+      const bh = 16;
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "#141414";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.roundRect(-bw / 2, -bh / 2, bw, bh, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      // 3 animated typing/chat dots
+      for (let d = 0; d < 3; d++) {
+        const bounce = Math.sin(t * 5 - d * 0.9) > 0.2 ? -1.4 : 0;
+        ctx.fillStyle = "#141414";
+        ctx.beginPath();
+        ctx.arc(-6 + d * 6, bounce, 1.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    };
+
     const drawNpc = (
       ctx: CanvasRenderingContext2D,
       npc: LiveNpc,
@@ -200,39 +233,24 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       const frameIdx = hasWalkCycle
         ? isMoving
           ? Math.floor(npc.phase * 0.85) % npc.imgs.length
-          : 2 // Hold passing/standing pose when paused
+          : 2 // Natural standing pose when pausing or chatting
         : 0;
       const img = npc.imgs[frameIdx];
       if (!img || !img.complete || !img.naturalWidth) return;
 
       const targetW = (img.naturalWidth / img.naturalHeight) * targetH;
 
-      // For multi-frame walk cycles, the art already has authentic bounce; no fake puppet bob/tilt
-      const bobY =
-        isMoving && !hasWalkCycle
-          ? npc.def.behavior === "cruiser"
-            ? Math.sin(npc.phase * 2.5) * 1.2
-            : Math.abs(Math.sin(npc.phase)) * (2.2 + npc.z * 2.8)
-          : 0;
-
-      const tilt =
-        isMoving && !hasWalkCycle
-          ? npc.def.behavior === "cruiser"
-            ? 0
-            : Math.sin(npc.phase) * 0.022
-          : 0;
-
-      // Subtle breathing squash/stretch when idle
-      const breathScaleY = !isMoving
-        ? 1 + Math.sin(npc.phase * 1.4) * 0.008
-        : hasWalkCycle
-          ? 1
-          : 1 + Math.abs(Math.sin(npc.phase)) * 0.014;
+      // Subtle conversational nod/breathing when chatting or idle
+      const breathScaleY =
+        npc.state === "chatting"
+          ? 1 + Math.sin(npc.phase * 2.4) * 0.012
+          : !isMoving
+            ? 1 + Math.sin(npc.phase * 1.4) * 0.008
+            : 1;
 
       ctx.save();
       ctx.globalAlpha = alpha;
-      ctx.translate(npc.x, groundY - bobY);
-      if (tilt) ctx.rotate(tilt);
+      ctx.translate(npc.x, groundY);
       ctx.scale(npc.flip ? -1 : 1, breathScaleY);
       ctx.drawImage(img, -targetW * 0.5, -targetH, targetW, targetH);
       ctx.restore();
@@ -259,11 +277,10 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         fCtx.clearRect(0, 0, w, h);
 
         const groundForZ = (z: number) => h * (0.78 + z * 0.19);
-        // Keep NPCs proportionally smaller than Amr so Amr is always the main focus
         const heightForZ = (z: number, scale = 1) =>
           h * (0.26 + z * 0.28) * scale;
 
-        // Update NPCs
+        // 1. Update NPCs
         npcs.forEach((npc) => {
           if (npc.def.behavior === "ambient") {
             const poi = npc.def.homePoi ? STREET_POIS[npc.def.homePoi] : undefined;
@@ -312,47 +329,46 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
 
           if (pausedRef.current) return;
 
-          if (npc.state === "pausing") {
-            npc.vx *= 0.85;
-            npc.vz *= 0.85;
-            npc.phase += dt * 1.5;
+          if (npc.chatCooldown > 0) npc.chatCooldown -= dt;
+
+          if (npc.state === "chatting" || npc.state === "pausing") {
+            npc.vx *= 0.82;
+            npc.vz *= 0.82;
+            npc.phase += dt * 1.8;
             npc.waitTimer -= dt;
             if (npc.waitTimer <= 0) {
+              if (npc.state === "chatting") {
+                npc.chatPartnerId = null;
+                npc.chatCooldown = rand(14, 24);
+              }
               pickNextRoute(npc, w);
             }
             return;
           }
 
-          // Walking / Cruising toward (targetX, targetZ)
+          // Walking toward (targetX, targetZ)
           const dx = npc.targetX - npc.x;
           const dz = npc.targetZ - npc.z;
           const dist = Math.hypot(dx, dz * 260);
 
           if (dist < 14) {
-            // Reached off-screen edge? Respawn on opposite side or wait briefly
             if (npc.x < -100 || npc.x > w + 100) {
               const [minZ, maxZ] = npc.def.zRange;
               const fromLeft = Math.random() < 0.5;
-              npc.x = fromLeft ? -150 : w + 150;
+              npc.x = fromLeft ? -160 : w + 160;
               npc.z = rand(minZ, maxZ);
               npc.visitedPoi = false;
               npc.state = "pausing";
-              npc.waitTimer =
-                npc.def.behavior === "cruiser" ? rand(3.0, 6.5) : rand(0.5, 2.2);
+              npc.waitTimer = rand(0.8, 3.2);
               return;
             }
-            // Reached in-scene POI (like Foul Cart or stroll pause)
             npc.state = "pausing";
             npc.waitTimer =
-              npc.def.behavior === "customer" ? rand(3.0, 5.5) : rand(1.8, 3.8);
-            // Face the foul cart if stopping there
-            if (npc.def.behavior === "customer") {
-              npc.flip = true;
-            }
+              npc.def.behavior === "customer" ? rand(2.8, 5.0) : rand(1.5, 3.2);
+            if (npc.def.behavior === "customer") npc.flip = true;
             return;
           }
 
-          // Smooth speed with ease-in/out near target
           const depthSpeedFactor = 0.72 + npc.z * 0.55;
           const desiredSpeed =
             npc.def.speed *
@@ -372,29 +388,52 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           if (Math.abs(npc.vx) > 2) {
             npc.flip = npc.vx < 0;
           }
-          npc.phase += dt * (npc.def.behavior === "cruiser" ? 12 : 5.5 + npc.z * 2);
-
-          // Scooter exhaust puffs
-          if (npc.def.effect === "exhaust" && npc.x > 0 && npc.x < w) {
-            npc.effectTimer -= dt;
-            if (npc.effectTimer <= 0) {
-              const gy = groundForZ(npc.z);
-              particles.push({
-                kind: "exhaust",
-                x: npc.x + (npc.flip ? 28 : -28),
-                y: gy - 14,
-                vx: (npc.flip ? 1 : -1) * rand(14, 24),
-                vy: rand(-10, -4),
-                life: 0,
-                maxLife: rand(0.6, 1.0),
-                size: rand(3, 6),
-              });
-              npc.effectTimer = rand(0.14, 0.25);
-            }
-          }
+          npc.phase += dt * (5.2 + npc.z * 2);
         });
 
-        // Update & draw particles on back layer
+        // 2. Social encounter check: if two social walkers meet, they stop & chat!
+        if (!pausedRef.current) {
+          for (let i = 0; i < npcs.length; i++) {
+            const a = npcs[i];
+            if (
+              !a.def.social ||
+              a.state !== "walking" ||
+              a.chatCooldown > 0 ||
+              a.x < w * 0.16 ||
+              a.x > w * 0.84 ||
+              (a.x > w * 0.43 && a.x < w * 0.57) // Keep Amr's center clear
+            ) {
+              continue;
+            }
+            for (let j = i + 1; j < npcs.length; j++) {
+              const b = npcs[j];
+              if (
+                !b.def.social ||
+                b.state !== "walking" ||
+                b.chatCooldown > 0
+              ) {
+                continue;
+              }
+              const xDist = Math.abs(a.x - b.x);
+              const zDist = Math.abs(a.z - b.z);
+              if (xDist > 34 && xDist < 72 && zDist < 0.08) {
+                const chatDuration = rand(3.5, 5.5);
+                a.state = "chatting";
+                b.state = "chatting";
+                a.waitTimer = chatDuration;
+                b.waitTimer = chatDuration;
+                a.chatPartnerId = b.def.id;
+                b.chatPartnerId = a.def.id;
+                // Face each other!
+                a.flip = a.x > b.x;
+                b.flip = b.x > a.x;
+                break;
+              }
+            }
+          }
+        }
+
+        // 3. Update & draw ambient particles
         for (let i = particles.length - 1; i >= 0; i--) {
           const p = particles[i];
           if (!pausedRef.current) {
@@ -423,20 +462,38 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           bCtx.restore();
         }
 
-        // Depth-sorted rendering: z < 0.65 behind Amr, z >= 0.65 occasionally in front
-        const backNpcs = npcs.filter((n) => n.z < 0.65).sort((a, b) => a.z - b.z);
-        const frontNpcs = npcs.filter((n) => n.z >= 0.65).sort((a, b) => a.z - b.z);
+        // 4. Depth-sorted rendering
+        const backNpcs = npcs.filter((n) => n.z < 0.62).sort((a, b) => a.z - b.z);
+        const frontNpcs = npcs.filter((n) => n.z >= 0.62).sort((a, b) => a.z - b.z);
 
         backNpcs.forEach((npc) => {
           const gy = groundForZ(npc.z);
           const th = heightForZ(npc.z, npc.def.sizeScale ?? 1);
-          drawNpc(bCtx, npc, gy, th, 0.78 + npc.z * 0.22);
+          drawNpc(bCtx, npc, gy, th, 0.82 + npc.z * 0.18);
         });
 
         frontNpcs.forEach((npc) => {
           const gy = groundForZ(npc.z);
           const th = heightForZ(npc.z, npc.def.sizeScale ?? 1);
-          drawNpc(fCtx, npc, gy, th, 0.9 + npc.z * 0.1);
+          drawNpc(fCtx, npc, gy, th, 0.92 + npc.z * 0.08);
+        });
+
+        // 5. Draw speech bubbles above chatting pairs (once per pair)
+        const drawnPairs = new Set<string>();
+        npcs.forEach((a) => {
+          if (a.state !== "chatting" || !a.chatPartnerId) return;
+          const pairKey = [a.def.id, a.chatPartnerId].sort().join("|");
+          if (drawnPairs.has(pairKey)) return;
+          const b = npcs.find((n) => n.def.id === a.chatPartnerId);
+          if (!b || b.state !== "chatting") return;
+          drawnPairs.add(pairKey);
+
+          const midX = (a.x + b.x) * 0.5;
+          const avgZ = (a.z + b.z) * 0.5;
+          const gy = groundForZ(avgZ);
+          const th = heightForZ(avgZ, 0.94);
+          const ctx = avgZ < 0.62 ? bCtx : fCtx;
+          drawSpeechBubble(ctx, midX, gy - th - 12, now / 1000);
         });
       }
 
