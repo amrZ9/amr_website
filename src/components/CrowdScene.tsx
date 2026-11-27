@@ -169,8 +169,11 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       }
 
       const slot = moverIdx++;
-      const startX =
-        ((slot + 0.5) / movers.length) * (initialW * 2.8) - initialW * 0.9;
+      const MAX_ACTIVE = 8;
+      const isActiveInitially = slot < MAX_ACTIVE;
+      const startX = isActiveInitially
+        ? ((slot + 0.5) / MAX_ACTIVE) * initialW
+        : -9999; // Parked in reserve off-screen until a slot opens
       const startZ = rand(minZ, maxZ);
       const goRight = slot % 2 === 0;
       const targetX = goRight ? initialW + 180 : -180;
@@ -185,8 +188,8 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         targetZ: rand(minZ, maxZ),
         vx: 0,
         vz: 0,
-        state: "walking",
-        waitTimer: 0,
+        state: isActiveInitially ? "walking" : "pausing",
+        waitTimer: isActiveInitially ? 0 : 99999,
         chatCooldown: rand(2, 8),
         chatPartnerId: null,
         activeLine: null,
@@ -467,13 +470,28 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
 
           if (dist < 14) {
             if (npc.x < -100 || npc.x > w + 100) {
-              const [minZ, maxZ] = npc.def.zRange;
-              const fromLeft = Math.random() < 0.5;
-              npc.x = fromLeft ? -160 : w + 160;
-              npc.z = rand(minZ, maxZ);
-              npc.visitedPoi = false;
+              // Park this walker in off-screen reserve and wake a fresh character from the 32-NPC pool!
+              npc.x = -9999;
               npc.state = "pausing";
-              npc.waitTimer = rand(2.5, 7.5);
+              npc.waitTimer = 99999;
+              npc.visitedPoi = false;
+
+              const reserves = npcs.filter(
+                (n) => n.def.behavior !== "ambient" && n.x < -5000 && n !== npc
+              );
+              if (reserves.length > 0) {
+                const next = reserves[Math.floor(Math.random() * reserves.length)];
+                const [minZ, maxZ] = next.def.zRange;
+                const fromLeft = Math.random() < 0.5;
+                next.x = fromLeft ? -140 : w + 140;
+                next.z = rand(minZ, maxZ);
+                next.visitedPoi = false;
+                next.speedBoost = 1;
+                next.state = "walking";
+                next.waitTimer = 0;
+                next.targetX = fromLeft ? w + 180 : -180;
+                next.targetZ = rand(minZ, maxZ);
+              }
               return;
             }
             npc.state = "pausing";
@@ -506,8 +524,9 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           npc.phase += dt * (5.2 + npc.z * 2) * npc.speedBoost;
         });
 
-        // 2. Smart Encounter Rules (from neighborhoodWorld.json!)
+        // 2. Smart Encounter Rules (max 2 active chats, never behind Amr)
         if (!pausedRef.current) {
+          const activeChatters = npcs.filter((n) => n.state === "chatting").length;
           for (let i = 0; i < npcs.length; i++) {
             const a = npcs[i];
             if (
@@ -515,7 +534,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
               a.chatCooldown > 0 ||
               a.x < w * 0.14 ||
               a.x > w * 0.86 ||
-              (a.x > w * 0.43 && a.x < w * 0.57)
+              (a.x > w * 0.36 && a.x < w * 0.64)
             ) {
               continue;
             }
@@ -574,7 +593,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
                 (a.meta?.connections?.includes(b.meta?.npcId ?? "") ?? false) ||
                 (a.def.social && b.def.social);
 
-              if (isConnected) {
+              if (isConnected && activeChatters < 4) {
                 const chatDuration = rand(3.8, 5.6);
                 a.state = "chatting";
                 b.state = "chatting";
@@ -641,22 +660,26 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           drawNpc(fCtx, npc, gy, th, 0.92 + npc.z * 0.08);
         });
 
-        // 5. Speech bubbles with real Haret El-Nakheel dialogue!
+        // 5. Speech bubbles always on front layer (max 2, never overlapping)
         const drawnPairs = new Set<string>();
+        const bubbleXs: number[] = [];
         npcs.forEach((a) => {
+          if (drawnPairs.size >= 2) return;
           if (a.state !== "chatting" || !a.chatPartnerId) return;
           const pairKey = [a.def.id, a.chatPartnerId].sort().join("|");
           if (drawnPairs.has(pairKey)) return;
           const b = npcs.find((n) => n.def.id === a.chatPartnerId);
           if (!b || b.state !== "chatting") return;
-          drawnPairs.add(pairKey);
 
           const midX = (a.x + b.x) * 0.5;
+          if (bubbleXs.some((bx) => Math.abs(bx - midX) < 260)) return;
+          drawnPairs.add(pairKey);
+          bubbleXs.push(midX);
+
           const avgZ = (a.z + b.z) * 0.5;
           const gy = groundForZ(avgZ);
           const th = heightForZ(avgZ, 0.94);
-          const ctx = avgZ < 0.62 ? bCtx : fCtx;
-          drawSpeechBubble(ctx, midX, gy - th - 14, now / 1000, a.activeLine || b.activeLine, w);
+          drawSpeechBubble(fCtx, midX, gy - th - 14, now / 1000, a.activeLine || b.activeLine, w);
         });
       }
 
