@@ -143,16 +143,4 @@ export const STREET_NPCS: NpcDefinition[] = [
     zRange: [0.25, 0.42],
     sizeScale: 0.92,
   },
-
-  // --- Fast cruiser (delivery scooter) ---
-  {
-    id: "delivery-scooter",
-    name: "Delivery Scooter",
-    behavior: "cruiser",
-    frames: ["/footer/street/fast-01.webp"],
-    speed: 110,
-    zRange: [0.48, 0.56],
-    effect: "exhaust",
-    sizeScale: 0.86,
-  },
 ];
