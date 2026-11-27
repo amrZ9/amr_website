@@ -194,34 +194,40 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       targetH: number,
       alpha: number
     ) => {
-      const frameIdx =
-        npc.imgs.length > 1
-          ? Math.floor(npc.phase * 0.8) % npc.imgs.length
-          : 0;
+      const speedMag = Math.hypot(npc.vx, npc.vz * 120);
+      const isMoving = npc.state === "walking" && speedMag > 4;
+      const hasWalkCycle = npc.imgs.length > 1;
+      const frameIdx = hasWalkCycle
+        ? isMoving
+          ? Math.floor(npc.phase * 1.25) % npc.imgs.length
+          : 2 // Hold passing/standing pose when paused
+        : 0;
       const img = npc.imgs[frameIdx];
       if (!img || !img.complete || !img.naturalWidth) return;
 
       const targetW = (img.naturalWidth / img.naturalHeight) * targetH;
-      const speedMag = Math.hypot(npc.vx, npc.vz * 120);
-      const isMoving = npc.state === "walking" && speedMag > 4;
 
-      // Natural stride bob + subtle breathing when paused/ambient
-      const bobY = isMoving
-        ? npc.def.behavior === "cruiser"
-          ? Math.sin(npc.phase * 2.5) * 1.2
-          : Math.abs(Math.sin(npc.phase)) * (2.2 + npc.z * 2.8)
-        : 0;
+      // For multi-frame walk cycles, the art already has authentic bounce; no fake puppet bob/tilt
+      const bobY =
+        isMoving && !hasWalkCycle
+          ? npc.def.behavior === "cruiser"
+            ? Math.sin(npc.phase * 2.5) * 1.2
+            : Math.abs(Math.sin(npc.phase)) * (2.2 + npc.z * 2.8)
+          : 0;
 
-      const tilt = isMoving
-        ? npc.def.behavior === "cruiser"
-          ? 0
-          : Math.sin(npc.phase) * 0.022
-        : 0;
+      const tilt =
+        isMoving && !hasWalkCycle
+          ? npc.def.behavior === "cruiser"
+            ? 0
+            : Math.sin(npc.phase) * 0.022
+          : 0;
 
       // Subtle breathing squash/stretch when idle
       const breathScaleY = !isMoving
         ? 1 + Math.sin(npc.phase * 1.4) * 0.008
-        : 1 + Math.abs(Math.sin(npc.phase)) * 0.014;
+        : hasWalkCycle
+          ? 1
+          : 1 + Math.abs(Math.sin(npc.phase)) * 0.014;
 
       // Soft ground shadow
       ctx.save();
