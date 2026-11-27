@@ -50,14 +50,14 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
     const images: HTMLImageElement[] = [];
     let loaded = 0;
 
-    const walkers: Walker[] = Array.from({ length: 18 }, (_, i) => {
+    const walkers: Walker[] = Array.from({ length: 14 }, (_, i) => {
       const dir = i % 2 === 0 ? 1 : -1;
       const layer = i % 3 === 0 ? "back" : "front";
       return {
         imgIdx: i % CROWD_SPRITES.length,
-        x: (i / 18) * 1400 - 100,
+        x: (i / 14) * 1400 - 100,
         speed: dir * (35 + (i % 5) * 12),
-        scale: layer === "back" ? 0.52 + (i % 3) * 0.04 : 0.62 + (i % 4) * 0.05,
+        scale: layer === "back" ? 0.36 + (i % 3) * 0.04 : 0.44 + (i % 4) * 0.04,
         layer,
         flip: dir < 0,
       };
