@@ -3,15 +3,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { profile } from "@/data/profile";
 
-const CROWD_SPRITES = [
-  "/footer/bengaluru/crowd-01.webp",
-  "/footer/bengaluru/crowd-02.webp",
-  "/footer/bengaluru/crowd-03.webp",
-  "/footer/bengaluru/crowd-04.webp",
-  "/footer/bengaluru/crowd-05.webp",
-  "/footer/bengaluru/crowd-06.webp",
-  "/footer/bengaluru/crowd-07.webp",
-];
+const CROWD_SPRITES = Array.from(
+  { length: 53 },
+  (_, i) => `/footer/egypt/char-${String(i + 1).padStart(2, "0")}.webp`
+);
 
 interface Walker {
   imgIdx: number;
@@ -104,8 +99,14 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         walkers.forEach((wk) => {
           if (!pausedRef.current) {
             wk.x += wk.speed * dt;
-            if (wk.speed > 0 && wk.x > w + 180) wk.x = -180;
-            if (wk.speed < 0 && wk.x < -180) wk.x = w + 180;
+            if (wk.speed > 0 && wk.x > w + 180) {
+              wk.x = -180;
+              wk.imgIdx = (wk.imgIdx + 19) % CROWD_SPRITES.length;
+            }
+            if (wk.speed < 0 && wk.x < -180) {
+              wk.x = w + 180;
+              wk.imgIdx = (wk.imgIdx + 19) % CROWD_SPRITES.length;
+            }
           }
           const img = images[wk.imgIdx];
           if (!img || !img.complete || !img.naturalWidth) return;
@@ -132,7 +133,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       img.src = src;
       img.onload = () => {
         loaded++;
-        if (loaded === CROWD_SPRITES.length && !dead) {
+        if (loaded === Math.min(10, CROWD_SPRITES.length) && !dead) {
           setReady(true);
         }
       };
