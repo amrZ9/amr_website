@@ -38,11 +38,11 @@ export function Header() {
   }, [menuOpen]);
 
   const navLinks = [
-    { label: "Projects", href: "#projects" },
-    { label: "About", href: "#about" },
-    { label: "Skills", href: "#skills" },
-    { label: "Experience", href: "#experience" },
-    { label: "Contact", href: "#contact" },
+    { label: "Projects", href: "/projects" },
+    { label: "About", href: "/about" },
+    { label: "Skills", href: "/skills" },
+    { label: "Experience", href: "/experience" },
+    { label: "Contact", href: "/#contact" },
   ];
 
   return (
@@ -51,7 +51,7 @@ export function Header() {
         <div className="header-inner">
           <a
             className="wordmark"
-            href="#about"
+            href="/"
             aria-label={`${profile.fullName}, home`}
           >
             <span className="wordmark-text">{profile.shortName}</span>
