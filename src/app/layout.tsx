@@ -4,6 +4,7 @@ import { profile } from "@/data/profile";
 import { GA_MEASUREMENT_ID } from "@/lib/analytics";
 import "./globals.css";
 import "./artcraft-motion.css";
+import "./blog.css";
 
 export const metadata: Metadata = {
   title: profile.meta.title,

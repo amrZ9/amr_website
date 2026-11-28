@@ -72,6 +72,7 @@ export function Footer() {
     { label: "Skills", href: "/skills" },
     { label: "Projects", href: "/projects" },
     { label: "Experience", href: "/experience" },
+    { label: "Blog", href: "/blog" },
   ];
 
   return (
