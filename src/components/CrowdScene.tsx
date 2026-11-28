@@ -35,11 +35,11 @@ const WORLD_BY_SPRITE = new Map<string, WorldNpcMeta>(
   (neighborhoodWorld.npcs as WorldNpcMeta[]).map((n) => [n.spriteId, n])
 );
 
-const HERO_FRAME_COUNT = 47;
-const HERO_FPS = 8; // Relaxed, confident stroll (~5.9s total)
+const HERO_FRAME_COUNT = 105;
+const HERO_FPS = 10; // Full-body relaxed walk-in, wave, gesture & settle (~10.5s)
 const HERO_FRAMES = Array.from(
   { length: HERO_FRAME_COUNT },
-  (_, i) => `/footer/hero/frame-${String(i + 1).padStart(2, "0")}.webp`
+  (_, i) => `/footer/hero/frame-${String(i + 1).padStart(3, "0")}.webp`
 );
 
 /** 3 clear visual depth lanes — rich and legible while Amr (100% crisp ink) owns center stage */
@@ -692,22 +692,14 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
                 Math.floor(heroTimeRef.current * HERO_FPS)
               );
         const heroImg = heroImgsRef.current[heroFrameIdx];
-        const fullImg = fullBodyImgRef.current;
-        const settledOnFullBody = heroTimeRef.current >= heroDuration;
-        const activeHeroImg =
-          settledOnFullBody && fullImg && fullImg.complete && fullImg.naturalWidth
-            ? fullImg
-            : heroImg;
-
-        if (activeHeroImg && activeHeroImg.complete && activeHeroImg.naturalWidth) {
-          const targetH = Math.min(h * 0.88, 385);
-          const targetW =
-            (activeHeroImg.naturalWidth / activeHeroImg.naturalHeight) * targetH;
-          const heroBottomOffset = 10;
+        if (heroImg && heroImg.complete && heroImg.naturalWidth) {
+          const targetH = Math.min(h * 0.92, 410);
+          const targetW = (heroImg.naturalWidth / heroImg.naturalHeight) * targetH;
+          const heroBottomOffset = 6;
           fCtx.save();
           fCtx.globalAlpha = 1;
           fCtx.drawImage(
-            activeHeroImg,
+            heroImg,
             w * 0.5 - targetW * 0.5,
             h - targetH - heroBottomOffset,
             targetW,
@@ -715,12 +707,12 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           );
           fCtx.restore();
 
-          // 2-step Hero Intro positioned to the right side of Amr's face (gesturing side)
-          const bubbleX = w * 0.5 + targetW * 0.38;
-          const bubbleY = h - targetH - heroBottomOffset + 46;
-          if (heroTimeRef.current >= 2.1 && heroTimeRef.current < 3.6) {
+          // 2-step Hero Intro positioned on the left side of Amr's face (gesturing hand side)
+          const bubbleX = w * 0.5 - targetW * 0.36;
+          const bubbleY = h - targetH - heroBottomOffset + 62;
+          if (heroTimeRef.current >= 4.2 && heroTimeRef.current < 6.2) {
             drawSpeechBubble(fCtx, bubbleX, bubbleY, now / 1000, "Hi...", w, "cloud");
-          } else if (heroTimeRef.current >= 3.6 && heroTimeRef.current <= heroDuration + 2.5) {
+          } else if (heroTimeRef.current >= 6.2 && heroTimeRef.current <= heroDuration + 1.5) {
             drawSpeechBubble(
               fCtx,
               bubbleX,
