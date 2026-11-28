@@ -107,7 +107,6 @@ export interface ProfileData {
     copyrightYear: string;
     finaleHeading: string;
     crowdName: string;
-    crowdPortrait: string;
     crowdCaption: string;
     crowdDescription: string;
   };
@@ -390,7 +389,6 @@ export const profile: ProfileData = {
     copyrightYear: "2026",
     finaleHeading: "See you around.",
     crowdName: "AMR.",
-    crowdPortrait: "/footer/egypt/amr-standing.webp",
     crowdCaption: "Understand what people need. Build what they'll use.",
     crowdDescription:
       "Illustrated street scene with portrait standing among passersby.",

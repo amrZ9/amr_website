@@ -60,8 +60,6 @@ interface LiveWalker {
   state: NpcState;
   waitTimer: number;
   chatCooldown: number;
-  chatPartnerId: string | null;
-  activeLine: string | null;
   reactionGlyph: string | null;
   reactionTimer: number;
   speedBoost: number;
@@ -75,9 +73,8 @@ interface AmbientSlot {
   lane: 0 | 1;
   def: NpcDefinition;
   meta?: WorldNpcMeta;
-  activeLine: string | null;
   imgs: HTMLImageElement[];
-  timer: number;     // 0 -> 12s lifecycle (1s fade-in, 10s hold, 1s fade/slide out)
+  timer: number; // 0 -> 12s lifecycle (1s fade-in, 10s hold, 1s fade/slide out)
   phase: number;
   flip: boolean;
 }
@@ -96,7 +93,6 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
   const heroTimeRef = useRef<number>(-1); // -1 = waiting to enter viewport
   const heroImgsRef = useRef<HTMLImageElement[]>([]);
   const lastValidHeroImgRef = useRef<HTMLImageElement | null>(null);
-  const fullBodyImgRef = useRef<HTMLImageElement | null>(null);
 
   // Trigger Amr's walk-in entrance when footer scrolls into view
   useEffect(() => {
@@ -163,13 +159,10 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       img.src = src;
       return img;
     });
-    const fullImg = new Image();
-    fullImg.src = profile.footer.crowdPortrait;
-    fullBodyImgRef.current = fullImg;
     walkerPool.slice(0, 10).forEach(getFrames);
     ambientPool.slice(0, 4).forEach(getFrames);
 
-    // Round-robin cursors: strictly 1 -> 32 for walkers, 1 -> 21 for ambient
+    // Round-robin cursors through all walkers and ambient vignettes
     let nextWalkerIdx = 0;
     let nextAmbientIdx = 0;
     let nextEntryDir: 1 | -1 = 1;
@@ -199,8 +192,6 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         state: "walking",
         waitTimer: 0,
         chatCooldown: rand(2, 6),
-        chatPartnerId: null,
-        activeLine: null,
         reactionGlyph: null,
         reactionTimer: 0,
         speedBoost: 1,
@@ -216,16 +207,11 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       spawnWalkerInLane(lane, ((i + 0.5) / laneAssignments.length) * initialW)
     );
 
-    // 2 rotating ambient slots (Left & Right) — each holds for 10s then exits & rotates through all 21!
+    // 2 rotating ambient slots (Left & Right) — each holds 10s then slides out & rotates through the ambient pool
     const nextAmbientDef = () => {
       const def = ambientPool[nextAmbientIdx % ambientPool.length];
       nextAmbientIdx++;
       return def;
-    };
-
-    const pickAmbientLine = (meta?: WorldNpcMeta) => {
-      if (!meta?.topics?.length) return null;
-      return meta.topics[Math.floor(Math.random() * meta.topics.length)];
     };
 
     const ambientSlots: AmbientSlot[] = [
@@ -238,7 +224,6 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           lane: 1,
           def,
           meta,
-          activeLine: pickAmbientLine(meta),
           imgs: getFrames(def),
           timer: 0,
           phase: 0,
@@ -254,7 +239,6 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           lane: 1,
           def,
           meta,
-          activeLine: pickAmbientLine(meta),
           imgs: getFrames(def),
           timer: 5.5, // Staggered so left & right swap at different times
           phase: 1.5,
@@ -283,8 +267,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       t: number,
       text: string | null,
       maxWidth: number,
-      style: "cloud" | "box" = "cloud",
-      tailDir: "left" | "right" = "left"
+      tailDir: "left" | "right" = "right"
     ) => {
       if (!text) return;
       ctx.save();
@@ -318,8 +301,8 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       const lineH = 14;
       const textW = Math.max(...lines.map((l) => ctx.measureText(l).width), 42);
       const textH = lines.length * lineH;
-      const padX = style === "cloud" ? 22 : 16;
-      const padY = style === "cloud" ? 16 : 12;
+      const padX = 22;
+      const padY = 16;
       const bw = Math.min(maxWidth - 28, textW + padX * 2);
       const bh = textH + padY * 2;
       const clampedX = Math.max(bw * 0.68 + 14, Math.min(maxWidth - bw * 0.68 - 14, cx));
@@ -327,86 +310,61 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
 
       ctx.translate(clampedX, floatY - bh * 0.25);
 
-      if (style === "cloud") {
-        // Plump hand-drawn comic cloud (matches reference top-right cloud with curved tail!)
-        const rx = bw / 2;
-        const ry = bh / 2;
-        const lobes = 10;
-        const buildCloud = () => {
-          ctx.beginPath();
-          for (let i = 0; i < lobes; i++) {
-            const a0 = (i / lobes) * Math.PI * 2;
-            const a1 = ((i + 1) / lobes) * Math.PI * 2;
-            const am = (a0 + a1) * 0.5;
-            const x0 = Math.cos(a0) * rx;
-            const y0 = Math.sin(a0) * ry;
-            const x1 = Math.cos(a1) * rx;
-            const y1 = Math.sin(a1) * ry;
-            const bulge = 1.26 + (i % 2 === 0 ? 0.08 : -0.02);
-            const cxp = Math.cos(am) * rx * bulge;
-            const cyp = Math.sin(am) * ry * bulge;
-            if (i === 0) ctx.moveTo(x0, y0);
-            ctx.quadraticCurveTo(cxp, cyp, x1, y1);
-          }
-          ctx.closePath();
-        };
-
-        // Bold comic ink drop-shadow
-        ctx.save();
-        ctx.translate(3, 3.5);
-        buildCloud();
-        ctx.fillStyle = "rgba(20,20,20,0.22)";
-        ctx.fill();
-        ctx.restore();
-
-        // Crisp white cloud + bold 2.1px black comic outline
-        buildCloud();
-        ctx.fillStyle = "#ffffff";
-        ctx.fill();
-        ctx.strokeStyle = "#141414";
-        ctx.lineWidth = 2.1;
-        ctx.stroke();
-
-        // Curved comic pointer tail at bottom (pointing left or right toward speaker)
-        const s = tailDir === "right" ? -1 : 1;
+      // Plump hand-drawn comic cloud with curved pointer tail
+      const rx = bw / 2;
+      const ry = bh / 2;
+      const lobes = 10;
+      const buildCloud = () => {
         ctx.beginPath();
-        ctx.moveTo(-6 * s, ry - 1);
-        ctx.quadraticCurveTo(-8 * s, ry + 11, -15 * s, ry + 13);
-        ctx.quadraticCurveTo(-2 * s, ry + 11, 5 * s, ry - 1);
+        for (let i = 0; i < lobes; i++) {
+          const a0 = (i / lobes) * Math.PI * 2;
+          const a1 = ((i + 1) / lobes) * Math.PI * 2;
+          const am = (a0 + a1) * 0.5;
+          const x0 = Math.cos(a0) * rx;
+          const y0 = Math.sin(a0) * ry;
+          const x1 = Math.cos(a1) * rx;
+          const y1 = Math.sin(a1) * ry;
+          const bulge = 1.26 + (i % 2 === 0 ? 0.08 : -0.02);
+          const cxp = Math.cos(am) * rx * bulge;
+          const cyp = Math.sin(am) * ry * bulge;
+          if (i === 0) ctx.moveTo(x0, y0);
+          ctx.quadraticCurveTo(cxp, cyp, x1, y1);
+        }
         ctx.closePath();
-        ctx.fillStyle = "#ffffff";
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(-6 * s, ry);
-        ctx.quadraticCurveTo(-8 * s, ry + 11, -15 * s, ry + 13);
-        ctx.quadraticCurveTo(-2 * s, ry + 11, 5 * s, ry);
-        ctx.strokeStyle = "#141414";
-        ctx.lineWidth = 2.0;
-        ctx.stroke();
-      } else {
-        // Bold comic oval/box with curved tail
-        ctx.fillStyle = "rgba(20,20,20,0.22)";
-        ctx.beginPath();
-        ctx.roundRect(-bw / 2 + 3, -bh / 2 + 3.5, bw, bh, 12);
-        ctx.fill();
+      };
 
-        ctx.fillStyle = "#ffffff";
-        ctx.strokeStyle = "#141414";
-        ctx.lineWidth = 2.1;
-        ctx.beginPath();
-        ctx.roundRect(-bw / 2, -bh / 2, bw, bh, 12);
-        ctx.fill();
-        ctx.stroke();
+      // Bold comic ink drop-shadow
+      ctx.save();
+      ctx.translate(3, 3.5);
+      buildCloud();
+      ctx.fillStyle = "rgba(20,20,20,0.22)";
+      ctx.fill();
+      ctx.restore();
 
-        ctx.beginPath();
-        ctx.moveTo(-5, bh / 2 - 1);
-        ctx.quadraticCurveTo(-7, bh / 2 + 10, -13, bh / 2 + 12);
-        ctx.quadraticCurveTo(-1, bh / 2 + 10, 5, bh / 2 - 1);
-        ctx.closePath();
-        ctx.fillStyle = "#ffffff";
-        ctx.fill();
-        ctx.stroke();
-      }
+      // Crisp white cloud + bold 2.1px black comic outline
+      buildCloud();
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+      ctx.strokeStyle = "#141414";
+      ctx.lineWidth = 2.1;
+      ctx.stroke();
+
+      // Curved comic pointer tail at bottom (pointing left or right toward speaker)
+      const s = tailDir === "right" ? -1 : 1;
+      ctx.beginPath();
+      ctx.moveTo(-6 * s, ry - 1);
+      ctx.quadraticCurveTo(-8 * s, ry + 11, -15 * s, ry + 13);
+      ctx.quadraticCurveTo(-2 * s, ry + 11, 5 * s, ry - 1);
+      ctx.closePath();
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(-6 * s, ry);
+      ctx.quadraticCurveTo(-8 * s, ry + 11, -15 * s, ry + 13);
+      ctx.quadraticCurveTo(-2 * s, ry + 11, 5 * s, ry);
+      ctx.strokeStyle = "#141414";
+      ctx.lineWidth = 2.0;
+      ctx.stroke();
 
       // Draw centered multi-line comic text (native RTL for Arabic lines)
       ctx.fillStyle = "#141414";
@@ -450,7 +408,6 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
             const nextMeta = WORLD_BY_SPRITE.get(nextDef.id);
             slot.def = nextDef;
             slot.meta = nextMeta;
-            slot.activeLine = pickAmbientLine(nextMeta);
             slot.imgs = getFrames(nextDef);
             slot.timer = 0;
             slot.phase = 0;
@@ -474,8 +431,6 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
             wk.waitTimer -= dt;
             if (wk.waitTimer <= 0) {
               wk.state = "walking";
-              wk.chatPartnerId = null;
-              wk.activeLine = null;
               wk.chatCooldown = rand(14, 22);
               wk.flip = wk.dir < 0;
             }
@@ -583,16 +538,8 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
                 b.state = "chatting";
                 a.waitTimer = dur;
                 b.waitTimer = dur;
-                a.chatPartnerId = b.def.id;
-                b.chatPartnerId = a.def.id;
                 a.flip = a.x > b.x;
                 b.flip = b.x > a.x;
-                const topics = a.meta?.topics?.length
-                  ? a.meta.topics
-                  : b.meta?.topics ?? [];
-                a.activeLine = topics.length
-                  ? topics[Math.floor(Math.random() * topics.length)]
-                  : null;
                 break;
               }
             }
@@ -715,9 +662,9 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           const bubbleY = drawY + 62;
 
           if (tHero >= 5.4 && tHero < 7.0) {
-            drawSpeechBubble(fCtx, bubbleX, bubbleY, now / 1000, "Hi...", w, "cloud", "right");
+            drawSpeechBubble(fCtx, bubbleX, bubbleY, now / 1000, "Hi...", w, "right");
           } else if (tHero >= 7.0 && tHero < 8.8) {
-            drawSpeechBubble(fCtx, bubbleX, bubbleY, now / 1000, "This is me, Amr.", w, "cloud", "right");
+            drawSpeechBubble(fCtx, bubbleX, bubbleY, now / 1000, "This is me, Amr.", w, "right");
           } else if (tHero >= 8.8 && tHero <= clip1Dur + 2.0) {
             drawSpeechBubble(
               fCtx,
@@ -726,7 +673,6 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
               now / 1000,
               "Welcome to my side\nof the internet.",
               w,
-              "cloud",
               "right"
             );
           }
