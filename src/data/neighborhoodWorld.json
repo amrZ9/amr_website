@@ -5,10 +5,6 @@
       {
         "name": "The Morning Table",
         "members": [
-          "NPC-01",
-          "NPC-05",
-          "NPC-15",
-          "NPC-16",
           "NPC-19",
           "NPC-22",
           "NPC-25",
@@ -34,8 +30,6 @@
       {
         "name": "The Young Crowd",
         "members": [
-          "NPC-02",
-          "NPC-03",
           "NPC-13",
           "NPC-18",
           "NPC-30",
@@ -49,10 +43,7 @@
       {
         "name": "The Family Route",
         "members": [
-          "NPC-04",
-          "NPC-05",
           "NPC-11",
-          "NPC-16",
           "NPC-19",
           "NPC-20",
           "NPC-21",
@@ -87,16 +78,6 @@
     ],
     "hangoutHubs": [
       {
-        "npcId": "NPC-01",
-        "name": "عم صبري's Tea Cart",
-        "role": "The morning meeting point and informal neighborhood noticeboard."
-      },
-      {
-        "npcId": "NPC-05",
-        "name": "فرن عم حنفي",
-        "role": "The dawn landmark where school routes and work crews overlap."
-      },
-      {
         "npcId": "NPC-09",
         "name": "The Backgammon Table",
         "role": "The competitive heart of the ahwa and the source of half the street's arguments."
@@ -105,11 +86,6 @@
         "npcId": "NPC-11",
         "name": "بنات القهوة Corner",
         "role": "A welcoming pause for mothers, students, friends, and anyone who needs a charger or a chat."
-      },
-      {
-        "npcId": "NPC-14",
-        "name": "عصير عم سيد",
-        "role": "The afternoon cool-down stop for footballers, commuters, and visitors."
       },
       {
         "npcId": "NPC-18",
@@ -131,151 +107,6 @@
     ]
   },
   "npcs": [
-    {
-      "npcId": "NPC-01",
-      "spriteId": "amb-tea-cart",
-      "behavior": "ambient",
-      "name": "عم صبري’s Tea Cart",
-      "story": "عم صبري has poured tea on Haret El-Nakheel for twenty-three years, and remembers how everyone takes their sugar. He opens before sunrise, warms the glasses, and keeps one small table free for people who need to talk. The morning crowd finds him before they find their offices, schools, or errands. He is famous for giving advice nobody requested and credit nobody can quite repay. He keeps a quiet tab for the delivery rider كريم and saves the strongest tea for الحاج فؤاد after backgammon. If two neighbors stop speaking, عم صبري usually finds a reason to put their glasses on the same tray.",
-      "topics": [
-        "يا صباح الفل يا أهل الحارة! الشاي سخن والدماغ رايقة، مين يشرب؟",
-        "شاي مظبوط يا أستاذ؟ سكر زيادة ولا على الريحة؟",
-        "اتفضلوا يا جماعة، كباية الشاي تروق القلب وتفك الزحمة."
-      ],
-      "connections": [
-        "NPC-22",
-        "NPC-23",
-        "NPC-48"
-      ],
-      "encounterRules": [
-        {
-          "targetNpcId": "NPC-22",
-          "action": "hang_out_at_spot",
-          "reason": "He takes his first tea here before work."
-        },
-        {
-          "targetNpcId": "NPC-48",
-          "action": "chat",
-          "reason": "The uncles trade neighborhood news over tea."
-        }
-      ]
-    },
-    {
-      "npcId": "NPC-02",
-      "spriteId": "amb-corn-cart",
-      "behavior": "ambient",
-      "name": "عم رجب’s Corn Cart",
-      "story": "عم رجب parks his corn cart beneath the old neem tree just as the afternoon heat begins to soften. He turns each cob slowly and knows which children like extra salt and which adults pretend they are only buying for the kids. His corner sits between the football wall and the lane leading to the bus stop. He is known for settling tiny arguments by offering both sides the same hot cob. The young footballers gather here after practice, while the traffic officer buys one when his shift finally eases. He insists that a good corn cob can repair almost any bad day, except perhaps a lost football match.",
-      "topics": [
-        "ذرة سخنة يا حبايب! بالملح والليمون، والريحة شاهدة!",
-        "مين عايز كوز سخن؟ لسه طالع من على النار!",
-        "اتفضل يا كابتن، دي ذرة تظبط المود بعد الماتش."
-      ],
-      "connections": [
-        "NPC-46",
-        "NPC-50",
-        "NPC-53"
-      ],
-      "encounterRules": [
-        {
-          "targetNpcId": "NPC-46",
-          "action": "hang_out_at_spot",
-          "reason": "The football friends stop for corn after their kickabout."
-        },
-        {
-          "targetNpcId": "NPC-50",
-          "action": "chat",
-          "reason": "He argues about football with the vendor every evening."
-        }
-      ]
-    },
-    {
-      "npcId": "NPC-03",
-      "spriteId": "amb-corn-kid",
-      "behavior": "ambient",
-      "name": "زياد, the Corn-Selling Kid",
-      "story": "زياد is عم رجب's quick-footed nephew, helping at the corn cart whenever school finishes. He spends the early afternoon carrying napkins, collecting coins, and trying to sneak a kick with any loose ball. After his shift he runs toward the narrow court behind the bakery to meet his friends. He is famous for remembering every customer's order and every football score, even when he gets both wrong. His uncle trusts him with the cart, and the football juggler lets him practice tricks when the street is quiet. زياد dreams of becoming a professional player but still considers the corn cart his first team.",
-      "topics": [
-        "ذرة يا ذرة! سخنة وحلوة، تعالى يا بطل!",
-        "عمو رجب، أنا خلصت الطلبات! مين بعده؟",
-        "يا كابتن، علمني حركة كورة وأنا أديك كوز ذرة."
-      ],
-      "connections": [
-        "NPC-02",
-        "NPC-46",
-        "NPC-50"
-      ],
-      "encounterRules": [
-        {
-          "targetNpcId": "NPC-50",
-          "action": "walk_together",
-          "reason": "They head toward the little football court after closing."
-        },
-        {
-          "targetNpcId": "NPC-46",
-          "action": "chat",
-          "reason": "He asks the older boys to teach him new tricks."
-        }
-      ]
-    },
-    {
-      "npcId": "NPC-04",
-      "spriteId": "amb-fruit-cart",
-      "behavior": "ambient",
-      "name": "الحاجة سعاد’s Fruit Cart",
-      "story": "الحاجة سعاد runs the fruit cart beside the pharmacy and can tell a ripe mango by touch alone. She arrives with the wholesale truck, arranges the fruit by color, and keeps the best oranges for familiar faces. Her day is a steady stream of mothers, office workers, and neighbors buying just one more thing. She is known for slipping an extra guava into a child's bag and refusing to let anyone choose a bruised peach. أم مريم buys fruit from her every Thursday, and the tourist with the folded map still owes her for two pomegranates. She knows most family news from shopping lists and never repeats anything that was not hers to tell.",
-      "topics": [
-        "يا فاكهة يا طازة! مانجا وجوافة وبرتقال، تعالى اختار!",
-        "الخوخ مسكر النهارده، جرب بنفسك يا باشا!",
-        "خد البرتقال الحلو ده، وبلّغ ماما إن عندي أحلى حاجة."
-      ],
-      "connections": [
-        "NPC-47",
-        "NPC-51",
-        "NPC-52"
-      ],
-      "encounterRules": [
-        {
-          "targetNpcId": "NPC-47",
-          "action": "chat",
-          "reason": "They compare prices and exchange family news."
-        },
-        {
-          "targetNpcId": "NPC-52",
-          "action": "wave_and_pass",
-          "reason": "She waves him toward the right street after he buys fruit."
-        }
-      ]
-    },
-    {
-      "npcId": "NPC-05",
-      "spriteId": "amb-bread-oven",
-      "behavior": "ambient",
-      "name": "فرن عم حنفي",
-      "story": "فرن عم حنفي has fed Haret El-Nakheel since before the new apartment block was built. He starts before dawn, pulls baladi loaves from the oven, and knows the sound of every regular's knock. The queue stretches past the doorway on school mornings and shrinks only after the last delivery van leaves. He is known for giving the warmest loaf to whoever looks most exhausted. The carpenter محمود collects bread for his workshop, while أم مريم sends her daughter to fetch the afternoon batch. The oven is the neighborhood clock: when its first bread comes out, the street officially wakes up.",
-      "topics": [
-        "عيش بلدي سخن يا حبايب! لسه خارج من الفرن!",
-        "العيش سخن، خد بالك من إيدك يا ابني!",
-        "اللي عايز عيش طازة يقرب، والرزق على الله."
-      ],
-      "connections": [
-        "NPC-25",
-        "NPC-49",
-        "NPC-47"
-      ],
-      "encounterRules": [
-        {
-          "targetNpcId": "NPC-49",
-          "action": "hang_out_at_spot",
-          "reason": "He collects bread for the workers on his route."
-        },
-        {
-          "targetNpcId": "NPC-25",
-          "action": "chat",
-          "reason": "She stops for warm bread on the school run."
-        }
-      ]
-    },
     {
       "npcId": "NPC-06",
       "spriteId": "amb-shisha",
@@ -492,135 +323,13 @@
       ],
       "connections": [
         "NPC-22",
-        "NPC-46",
-        "NPC-01"
+        "NPC-46"
       ],
       "encounterRules": [
         {
           "targetNpcId": "NPC-22",
           "action": "chat",
           "reason": "They compare routes and complain about the traffic."
-        },
-        {
-          "targetNpcId": "NPC-01",
-          "action": "hang_out_at_spot",
-          "reason": "He settles part of his tea tab before taking another order."
-        }
-      ]
-    },
-    {
-      "npcId": "NPC-14",
-      "spriteId": "amb-sugarcane",
-      "behavior": "ambient",
-      "name": "عصير عم سيد",
-      "story": "عم سيد presses sugarcane beside the bus stop, where the machine's cheerful rattle can be heard halfway down the block. He opens after noon, washes every glass himself, and keeps lemons chilled for customers who prefer a sharper taste. Students, drivers, and tired shoppers gather there when the afternoon sun becomes too much. He is known for remembering who wants extra lemon and who always says they are on a diet before ordering two cups. The football friends stop after practice, and the tourist discovered the stall after asking for something cold. His best customers are the ones who bring their own reusable bottles and stay long enough to hear the latest score.",
-      "topics": [
-        "قصب ساقع يا حبايب! كباية ترد الروح!",
-        "قصب بالليمون ولا سادة؟ اتفضل، كله فريش!",
-        "الحر ده ملوش حل غير كوباية قصب متلجة!"
-      ],
-      "connections": [
-        "NPC-46",
-        "NPC-52",
-        "NPC-29"
-      ],
-      "encounterRules": [
-        {
-          "targetNpcId": "NPC-46",
-          "action": "hang_out_at_spot",
-          "reason": "They cool down here after playing football."
-        },
-        {
-          "targetNpcId": "NPC-52",
-          "action": "chat",
-          "reason": "He recommends the local favorite to the visitor."
-        }
-      ]
-    },
-    {
-      "npcId": "NPC-15",
-      "spriteId": "amb-taameya",
-      "behavior": "ambient",
-      "name": "أبو ياسين’s Ta'ameya Cart",
-      "story": "أبو ياسين fries ta'ameya beside the alley entrance and claims his green mixture has never changed in thirty years. He starts before sunrise, serves commuters in paper sleeves, and keeps the crispest pieces for the schoolchildren. The queue is short but constant, especially when the factory shift changes. He is known for giving كريم an extra sandwich while loudly reminding him about the money he owes. كريم's debt is legendary, and the carpenter محمود buys breakfast for his crew whenever a job starts early. أبو ياسين says he trusts people more than notebooks, which is why everyone knows exactly who owes him.",
-      "topics": [
-        "طعمية سخنة يا بيه! قرمشة من بره وطراوة من جوه!",
-        "عيش وطعمية سخنة! تعالى قبل ما الصينية تخلص!",
-        "يا كريم، الحساب القديم الأول وبعدين نزودلك ساندوتش!"
-      ],
-      "connections": [
-        "NPC-22",
-        "NPC-49",
-        "NPC-25"
-      ],
-      "encounterRules": [
-        {
-          "targetNpcId": "NPC-22",
-          "action": "chat",
-          "reason": "He reminds the regular customer about the running tab."
-        },
-        {
-          "targetNpcId": "NPC-49",
-          "action": "hang_out_at_spot",
-          "reason": "He buys breakfast for the work crew."
-        }
-      ]
-    },
-    {
-      "npcId": "NPC-16",
-      "spriteId": "amb-foul-girl",
-      "behavior": "ambient",
-      "name": "نور’s Foul Cart",
-      "story": "نور took over the foul cart from her father and made its morning queue the most cheerful one on the street. She prepares the beans before dawn, labels the spice jars, and remembers which regular wants oil and which wants lemon. She serves students and workers until the first rush is over, then walks her little brother to school. She is known for refusing to rush a sandwich and for correcting anyone who calls her cart her father's business. أم مريم trusts her with breakfast orders, and زياد sometimes helps carry supplies when his uncle's corn cart is quiet. نور is saving to open a small breakfast shop of her own without leaving the neighborhood that raised her.",
-      "topics": [
-        "فول سخن يا صباح الفل! بالزيت والليمون والكمون!",
-        "ساندوتش فول على السريع؟ عندي اللي يشبعك لحد الضهر!",
-        "يا جماعة الفول جاهز، واللي مستعجل طلبه هيتعمل حالًا!"
-      ],
-      "connections": [
-        "NPC-25",
-        "NPC-03",
-        "NPC-47"
-      ],
-      "encounterRules": [
-        {
-          "targetNpcId": "NPC-25",
-          "action": "chat",
-          "reason": "They coordinate breakfast for the family."
-        },
-        {
-          "targetNpcId": "NPC-03",
-          "action": "wave_and_pass",
-          "reason": "Ziad brings her a crate when he is helping his uncle."
-        }
-      ]
-    },
-    {
-      "npcId": "NPC-17",
-      "spriteId": "amb-fruit-stand",
-      "behavior": "ambient",
-      "name": "باسم’s Evening Fruit Stand",
-      "story": "باسم sets up a smaller fruit stand near the alley at dusk, specializing in whatever the wholesale market had left at a good price. He weighs carefully, keeps a notebook of neighborhood orders, and sends unsold fruit to the juice shop next door. His busiest hour is when families return from work and remember they have guests coming. He is known for his dramatic sales pitches and his habit of calling every customer 'ya rayyes'. الحاجة سعاد taught him how to choose produce, while the woman in the abaya orders fruit for her mother's house. The two fruit sellers pretend to compete, but they share transport costs and warn each other about bad deliveries.",
-      "topics": [
-        "فاكهة المساء يا حبايب! تفاح وموز وبرتقال!",
-        "يا ريس، تعالى شوف الأسعار الحلوة قبل ما البضاعة تخلص!",
-        "يا حاجة سعاد، خليتلك البرتقال الصغير اللي بتحبيه."
-      ],
-      "connections": [
-        "NPC-04",
-        "NPC-51",
-        "NPC-29"
-      ],
-      "encounterRules": [
-        {
-          "targetNpcId": "NPC-04",
-          "action": "chat",
-          "reason": "They compare wholesale prices and share supplier gossip."
-        },
-        {
-          "targetNpcId": "NPC-51",
-          "action": "hang_out_at_spot",
-          "reason": "She collects her family's evening fruit order."
         }
       ]
     },
@@ -665,16 +374,9 @@
         "يا علي، اتفقنا على حاجة حلوة واحدة مش المحل كله."
       ],
       "connections": [
-        "NPC-05",
-        "NPC-16",
         "NPC-12"
       ],
       "encounterRules": [
-        {
-          "targetNpcId": "NPC-16",
-          "action": "hang_out_at_spot",
-          "reason": "They collect their regular breakfast order."
-        },
         {
           "targetNpcId": "NPC-12",
           "action": "wave_and_pass",
@@ -694,20 +396,13 @@
         "ورّي عم ناصر الرسمة الجديدة، هيفرح بيها."
       ],
       "connections": [
-        "NPC-08",
-        "NPC-14",
-        "NPC-17"
+        "NPC-08"
       ],
       "encounterRules": [
         {
           "targetNpcId": "NPC-08",
           "action": "chat",
           "reason": "Salma shows him a drawing of the street."
-        },
-        {
-          "targetNpcId": "NPC-14",
-          "action": "hang_out_at_spot",
-          "reason": "They stop for a cold drink after the lesson."
         }
       ]
     },
@@ -723,16 +418,10 @@
         "الشارع بيتنضف بإيدينا كلنا، مش بالمكنسة بس."
       ],
       "connections": [
-        "NPC-05",
         "NPC-12",
         "NPC-25"
       ],
       "encounterRules": [
-        {
-          "targetNpcId": "NPC-05",
-          "action": "chat",
-          "reason": "The baker saves him a warm loaf each morning."
-        },
         {
           "targetNpcId": "NPC-25",
           "action": "wave_and_pass",
@@ -751,23 +440,8 @@
         "If a door starts squeaking, call me before you replace it.",
         "Measure twice, cut once, then take a tea break."
       ],
-      "connections": [
-        "NPC-15",
-        "NPC-05",
-        "NPC-01"
-      ],
-      "encounterRules": [
-        {
-          "targetNpcId": "NPC-15",
-          "action": "chat",
-          "reason": "The vendor teases him about always ordering an extra sandwich."
-        },
-        {
-          "targetNpcId": "NPC-01",
-          "action": "hang_out_at_spot",
-          "reason": "He takes tea before opening the workshop."
-        }
-      ]
+      "connections": [],
+      "encounterRules": []
     },
     {
       "npcId": "NPC-23",
@@ -781,7 +455,6 @@
         "One mango, then straight back to my notes."
       ],
       "connections": [
-        "NPC-04",
         "NPC-18",
         "NPC-11"
       ],
@@ -840,7 +513,6 @@
       ],
       "connections": [
         "NPC-19",
-        "NPC-16",
         "NPC-21"
       ],
       "encounterRules": [
@@ -868,16 +540,10 @@
         "Tomorrow I'll leave earlier. I mean it this time."
       ],
       "connections": [
-        "NPC-01",
         "NPC-12",
         "NPC-10"
       ],
       "encounterRules": [
-        {
-          "targetNpcId": "NPC-01",
-          "action": "hang_out_at_spot",
-          "reason": "He grabs a quick tea on the way to work."
-        },
         {
           "targetNpcId": "NPC-12",
           "action": "wave_and_pass",
@@ -897,16 +563,10 @@
         "Take this extra flower. Someone might need a smile today."
       ],
       "connections": [
-        "NPC-17",
         "NPC-08",
         "NPC-11"
       ],
       "encounterRules": [
-        {
-          "targetNpcId": "NPC-17",
-          "action": "chat",
-          "reason": "They coordinate on fresh stock and deliveries."
-        },
         {
           "targetNpcId": "NPC-08",
           "action": "wave_and_pass",
@@ -926,22 +586,9 @@
         "Which building? I know every entrance on this street."
       ],
       "connections": [
-        "NPC-15",
-        "NPC-01",
         "NPC-12"
       ],
-      "encounterRules": [
-        {
-          "targetNpcId": "NPC-15",
-          "action": "avoid_turn_around",
-          "reason": "He spots the vendor holding the debt notebook and takes the long way."
-        },
-        {
-          "targetNpcId": "NPC-01",
-          "action": "chat",
-          "reason": "He negotiates another cup of tea on credit."
-        }
-      ]
+      "encounterRules": []
     },
     {
       "npcId": "NPC-29",
@@ -956,8 +603,7 @@
       ],
       "connections": [
         "NPC-20",
-        "NPC-08",
-        "NPC-17"
+        "NPC-08"
       ],
       "encounterRules": [
         {
@@ -984,20 +630,13 @@
         "Practice ends when the streetlights come on."
       ],
       "connections": [
-        "NPC-46",
-        "NPC-03",
-        "NPC-02"
+        "NPC-46"
       ],
       "encounterRules": [
         {
           "targetNpcId": "NPC-46",
           "action": "walk_together",
           "reason": "They head toward the court for practice."
-        },
-        {
-          "targetNpcId": "NPC-03",
-          "action": "chat",
-          "reason": "Ziad asks him to teach a new trick."
         }
       ]
     },
@@ -1072,7 +711,6 @@
       ],
       "connections": [
         "NPC-11",
-        "NPC-05",
         "NPC-47"
       ],
       "encounterRules": [
@@ -1080,11 +718,6 @@
           "targetNpcId": "NPC-11",
           "action": "walk_together",
           "reason": "They carry the tray together to the café."
-        },
-        {
-          "targetNpcId": "NPC-05",
-          "action": "chat",
-          "reason": "They discuss borrowing oven space for a large order."
         }
       ]
     },
@@ -1129,16 +762,10 @@
         "If you hear me practicing, that's a lesson, not a concert."
       ],
       "connections": [
-        "NPC-01",
         "NPC-11",
         "NPC-48"
       ],
       "encounterRules": [
-        {
-          "targetNpcId": "NPC-01",
-          "action": "chat",
-          "reason": "They talk music while he waits for his tea."
-        },
         {
           "targetNpcId": "NPC-11",
           "action": "wave_and_pass",
@@ -1158,16 +785,9 @@
         "A discount is not the same thing as free money."
       ],
       "connections": [
-        "NPC-17",
-        "NPC-01",
         "NPC-18"
       ],
       "encounterRules": [
-        {
-          "targetNpcId": "NPC-17",
-          "action": "chat",
-          "reason": "They compare prices and supplier invoices."
-        },
         {
           "targetNpcId": "NPC-18",
           "action": "walk_together",
@@ -1187,7 +807,6 @@
         "I'm off duty, but I can still find a bandage."
       ],
       "connections": [
-        "NPC-04",
         "NPC-21",
         "NPC-47"
       ],
@@ -1196,11 +815,6 @@
           "targetNpcId": "NPC-21",
           "action": "chat",
           "reason": "They coordinate a discreet check-in on an elderly resident."
-        },
-        {
-          "targetNpcId": "NPC-04",
-          "action": "hang_out_at_spot",
-          "reason": "She picks up fruit after her shift."
         }
       ]
     },
@@ -1216,20 +830,13 @@
         "Where are you going? I probably know a way."
       ],
       "connections": [
-        "NPC-12",
-        "NPC-14",
-        "NPC-01"
+        "NPC-12"
       ],
       "encounterRules": [
         {
           "targetNpcId": "NPC-12",
           "action": "chat",
           "reason": "They exchange updates about the junction and roadworks."
-        },
-        {
-          "targetNpcId": "NPC-14",
-          "action": "hang_out_at_spot",
-          "reason": "He stops for juice between fares."
         }
       ]
     },
@@ -1304,7 +911,6 @@
       ],
       "connections": [
         "NPC-11",
-        "NPC-05",
         "NPC-21"
       ],
       "encounterRules": [
@@ -1449,7 +1055,6 @@
       ],
       "connections": [
         "NPC-30",
-        "NPC-02",
         "NPC-13"
       ],
       "encounterRules": [
@@ -1457,11 +1062,6 @@
           "targetNpcId": "NPC-30",
           "action": "walk_together",
           "reason": "They head to practice under his coaching."
-        },
-        {
-          "targetNpcId": "NPC-02",
-          "action": "hang_out_at_spot",
-          "reason": "They stop for corn after the match."
         }
       ]
     },
@@ -1477,16 +1077,10 @@
         "We know everyone here. That's the best part of living on this street."
       ],
       "connections": [
-        "NPC-04",
         "NPC-33",
         "NPC-11"
       ],
       "encounterRules": [
-        {
-          "targetNpcId": "NPC-04",
-          "action": "chat",
-          "reason": "Janna chooses fruit while her mother catches up with the vendor."
-        },
         {
           "targetNpcId": "NPC-33",
           "action": "wave_and_pass",
@@ -1507,8 +1101,7 @@
       ],
       "connections": [
         "NPC-07",
-        "NPC-06",
-        "NPC-01"
+        "NPC-06"
       ],
       "encounterRules": [
         {
@@ -1535,16 +1128,10 @@
         "Fresh bread for the crew? That's better than overtime."
       ],
       "connections": [
-        "NPC-05",
         "NPC-21",
         "NPC-22"
       ],
       "encounterRules": [
-        {
-          "targetNpcId": "NPC-05",
-          "action": "hang_out_at_spot",
-          "reason": "He collects bread for the renovation crew."
-        },
         {
           "targetNpcId": "NPC-21",
           "action": "chat",
@@ -1565,7 +1152,6 @@
       ],
       "connections": [
         "NPC-30",
-        "NPC-02",
         "NPC-12"
       ],
       "encounterRules": [
@@ -1593,20 +1179,13 @@
         "No, the airport is definitely not five minutes away."
       ],
       "connections": [
-        "NPC-11",
-        "NPC-17",
-        "NPC-04"
+        "NPC-11"
       ],
       "encounterRules": [
         {
           "targetNpcId": "NPC-11",
           "action": "hang_out_at_spot",
           "reason": "She charges her phone and catches up with the café owners."
-        },
-        {
-          "targetNpcId": "NPC-17",
-          "action": "chat",
-          "reason": "She collects the fruit order for her mother."
         }
       ]
     },
@@ -1623,19 +1202,13 @@
       ],
       "connections": [
         "NPC-08",
-        "NPC-18",
-        "NPC-04"
+        "NPC-18"
       ],
       "encounterRules": [
         {
           "targetNpcId": "NPC-08",
           "action": "chat",
           "reason": "The retired teacher gives him a hand-drawn shortcut."
-        },
-        {
-          "targetNpcId": "NPC-04",
-          "action": "hang_out_at_spot",
-          "reason": "He returns for fruit and another recommendation."
         }
       ]
     },
