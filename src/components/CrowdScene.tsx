@@ -738,29 +738,28 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
 
         if (renderHeroImg && renderHeroImg.complete && renderHeroImg.naturalWidth) {
           const isClip2 = tHero >= clip1Dur;
-          // Exact pixel alignment between Clip 1 end (bbox 138,45,301,522) & Clip 2 start (147,32,311,517)
-          const alignScale = isClip2 ? 477 / 485 : 1;
-          const targetH = Math.min(h * 0.92, 410) * alignScale;
-          const targetW =
-            (renderHeroImg.naturalWidth / renderHeroImg.naturalHeight) * targetH;
-          const heroBottomOffset = 6;
-          const alignDx = isClip2 ? (-9.5 / 450) * targetW : 0;
-          const alignDy = isClip2 ? (7 / 540) * targetH : 0;
-          const heroCenterX = w * heroCenterXRatio + alignDx;
+          const H1 = Math.min(h * 0.92, 410);
+          const W1 = (renderHeroImg.naturalWidth / renderHeroImg.naturalHeight) * H1;
+          const y1 = h - H1 - 6;
+          const heroCenterX = w * heroCenterXRatio;
+
+          // Exact 0.000px match on head top (45 vs 32), shoe bottom (522 vs 517), & centerX (219.5 vs 229)
+          const targetH = isClip2 ? H1 * (477 / 485) : H1;
+          const targetW = isClip2 ? W1 * (477 / 485) : W1;
+          const drawX = isClip2
+            ? heroCenterX - W1 * 0.5 + (219.5 / 450) * W1 - (229 / 450) * targetW
+            : heroCenterX - W1 * 0.5;
+          const drawY = isClip2
+            ? y1 + (45 * H1 - 32 * targetH) / 540
+            : y1;
 
           fCtx.save();
           fCtx.globalAlpha = 1;
-          fCtx.drawImage(
-            renderHeroImg,
-            heroCenterX - targetW * 0.5,
-            h - targetH - heroBottomOffset + alignDy,
-            targetW,
-            targetH
-          );
+          fCtx.drawImage(renderHeroImg, drawX, drawY, targetW, targetH);
           fCtx.restore();
 
-          const bubbleX = heroCenterX - targetW * 0.36;
-          const bubbleY = h - targetH - heroBottomOffset + 62;
+          const bubbleX = heroCenterX - W1 * 0.36;
+          const bubbleY = y1 + 62;
 
           // Clip 1 Clouds (Center Intro)
           if (tHero >= 5.4 && tHero < 7.0) {
