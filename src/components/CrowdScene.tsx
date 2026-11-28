@@ -282,7 +282,8 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       t: number,
       text: string | null,
       maxWidth: number,
-      style: "cloud" | "box" = "cloud"
+      style: "cloud" | "box" = "cloud",
+      tailDir: "left" | "right" = "left"
     ) => {
       if (!text) return;
       ctx.save();
@@ -360,18 +361,19 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         ctx.lineWidth = 2.1;
         ctx.stroke();
 
-        // Curved comic pointer tail at bottom
+        // Curved comic pointer tail at bottom (pointing left or right toward speaker)
+        const s = tailDir === "right" ? -1 : 1;
         ctx.beginPath();
-        ctx.moveTo(-6, ry - 1);
-        ctx.quadraticCurveTo(-8, ry + 11, -15, ry + 13);
-        ctx.quadraticCurveTo(-2, ry + 11, 5, ry - 1);
+        ctx.moveTo(-6 * s, ry - 1);
+        ctx.quadraticCurveTo(-8 * s, ry + 11, -15 * s, ry + 13);
+        ctx.quadraticCurveTo(-2 * s, ry + 11, 5 * s, ry - 1);
         ctx.closePath();
         ctx.fillStyle = "#ffffff";
         ctx.fill();
         ctx.beginPath();
-        ctx.moveTo(-6, ry);
-        ctx.quadraticCurveTo(-8, ry + 11, -15, ry + 13);
-        ctx.quadraticCurveTo(-2, ry + 11, 5, ry);
+        ctx.moveTo(-6 * s, ry);
+        ctx.quadraticCurveTo(-8 * s, ry + 11, -15 * s, ry + 13);
+        ctx.quadraticCurveTo(-2 * s, ry + 11, 5 * s, ry);
         ctx.strokeStyle = "#141414";
         ctx.lineWidth = 2.0;
         ctx.stroke();
@@ -707,12 +709,12 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           );
           fCtx.restore();
 
-          // 2-step Hero Intro positioned on the left side of Amr's face (gesturing hand side)
+          // 3-step Hero Intro positioned on the left side of Amr's face with tail pointing right toward him
           const bubbleX = w * 0.5 - targetW * 0.36;
           const bubbleY = h - targetH - heroBottomOffset + 62;
-          if (heroTimeRef.current >= 4.2 && heroTimeRef.current < 6.2) {
-            drawSpeechBubble(fCtx, bubbleX, bubbleY, now / 1000, "Hi...", w, "cloud");
-          } else if (heroTimeRef.current >= 6.2 && heroTimeRef.current <= heroDuration + 1.5) {
+          if (heroTimeRef.current >= 4.0 && heroTimeRef.current < 5.8) {
+            drawSpeechBubble(fCtx, bubbleX, bubbleY, now / 1000, "Hi...", w, "cloud", "right");
+          } else if (heroTimeRef.current >= 5.8 && heroTimeRef.current < 8.0) {
             drawSpeechBubble(
               fCtx,
               bubbleX,
@@ -720,7 +722,19 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
               now / 1000,
               "This is me, Amr.",
               w,
-              "cloud"
+              "cloud",
+              "right"
+            );
+          } else if (heroTimeRef.current >= 8.0 && heroTimeRef.current <= heroDuration + 1.5) {
+            drawSpeechBubble(
+              fCtx,
+              bubbleX,
+              bubbleY,
+              now / 1000,
+              "Welcome.",
+              w,
+              "cloud",
+              "right"
             );
           }
         }
