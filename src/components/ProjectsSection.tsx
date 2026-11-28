@@ -19,15 +19,6 @@ export function ProjectsSection() {
       className="projects-section wrap section-pad measure-content"
       data-sc-act="flow"
     >
-      <div className="ac-chapter-bar">
-        <div className="ac-chapter-bar-inner">
-          <span>
-            <span className="ac-chapter-index">03</span> / VENTURES &amp; PROJECTS
-          </span>
-          <span>CASE STUDIES</span>
-        </div>
-      </div>
-
       <div data-ac-reveal="out">
       <div className="projects-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: "16px", flexWrap: "wrap" }}>
         <h2>

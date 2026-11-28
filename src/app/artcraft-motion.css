@@ -143,11 +143,11 @@
   font-weight: 600;
 }
 
-/* 5. Right-Edge Precision Scroll Ruler & Jump Index */
+/* 5. Left-Edge Precision Scroll Ruler & Jump Index */
 .ac-ruler {
   position: fixed;
   top: 72px;
-  right: 10px;
+  left: 10px;
   bottom: 24px;
   width: 24px;
   z-index: 35;
@@ -155,7 +155,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: flex-start;
   opacity: 0.55;
 }
 
@@ -169,7 +169,7 @@
   line-height: 1;
 }
 
-.ac-ruler-tick::after {
+.ac-ruler-tick::before {
   content: "";
   display: block;
   width: 6px;
@@ -177,14 +177,14 @@
   background: currentColor;
 }
 
-.ac-ruler-tick.is-major::after {
+.ac-ruler-tick.is-major::before {
   width: 12px;
   background: var(--sc-ink);
 }
 
 .ac-ruler-indicator {
   position: absolute;
-  right: 0;
+  left: 0;
   width: 16px;
   height: 2px;
   background: var(--sc-accent, #d8ff3e);
@@ -193,7 +193,7 @@
 
 .ac-jump-index {
   position: fixed;
-  right: 40px;
+  right: 24px;
   bottom: 24px;
   z-index: 35;
   display: none;
@@ -204,6 +204,13 @@
   font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.ac-jump-index.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(8px);
 }
 
 @media (min-width: 1200px) {
@@ -420,21 +427,6 @@
    High-Energy Kinetic Animations (Marquee, Progress Laser, 3D Tilt, Parallax)
    ========================================================================== */
 
-/* 13. Top Scroll Progress Laser Bar */
-.ac-progress-bar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 3px;
-  width: 100%;
-  transform-origin: left center;
-  transform: scaleX(var(--scroll-progress, 0));
-  background: linear-gradient(90deg, #10b981, #d8ff3e, #f59e0b);
-  z-index: 1000;
-  pointer-events: none;
-  will-change: transform;
-}
-
 /* 14. Infinite Kinetic Marquee Ribbon */
 .ac-marquee {
   width: 100%;
@@ -500,4 +492,207 @@
 .ac-parallax-x {
   will-change: transform;
   transition: transform 0.08s linear;
+}
+
+/* 17. Responsive Footer Layout */
+.site-footer:has(.footer-finale) {
+  padding-top: 20px !important;
+}
+
+.footer-direct-contact {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #b5b5b5;
+  white-space: nowrap;
+}
+
+.footer-direct-contact a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.footer-socials {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.footer-socials a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: #cfcfcf;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.footer-socials a:hover {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+.footer-explore {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  align-self: start;
+  text-align: right;
+  margin-top: 4px;
+}
+
+.site-footer .footer-explore > p {
+  margin: 0 0 2px !important;
+  line-height: 1.2 !important;
+}
+
+.footer-explore-links {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 20px;
+  margin-top: 0 !important;
+  white-space: nowrap;
+}
+
+.site-footer .footer-explore-links a {
+  min-height: 0 !important;
+  padding: 2px 0 !important;
+  line-height: 1.3 !important;
+}
+
+.footer-finale {
+  grid-template-rows: auto minmax(0, 1fr) 42px !important;
+  margin-top: 0 !important;
+}
+
+.footer-finale-custom {
+  display: grid !important;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    ". seeyou"
+    "legal backtop";
+  align-items: end;
+  row-gap: 0;
+  column-gap: 16px;
+  padding-bottom: 6px;
+  margin-top: -18px;
+}
+
+.footer-back-top {
+  grid-area: backtop;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.footer-see-you {
+  grid-area: seeyou;
+  justify-self: end;
+  margin: 0 !important;
+  font-size: clamp(22px, 2.3vw, 32px) !important;
+  line-height: 1.05 !important;
+}
+
+.footer-legal {
+  grid-area: legal;
+  justify-self: start;
+  font-size: 13px;
+  color: #b5b5b5;
+}
+
+.footer-legal a {
+  color: #f8f7f4;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 768px) {
+  .site-footer:has(.footer-finale) {
+    padding-top: 118px !important;
+  }
+
+  .site-footer:has(.footer-finale) .footer-top {
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+    padding-bottom: 16px;
+  }
+
+  .footer-identity h2 {
+    display: none;
+  }
+
+  .footer-direct-contact {
+    margin-top: 0;
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+
+  .footer-top-spacer,
+  .footer-explore {
+    display: none !important;
+  }
+
+  .footer-finale {
+    grid-template-rows: auto minmax(0, 1fr) 52px !important;
+    margin-top: 4px !important;
+  }
+
+  .footer-finale-custom {
+    position: relative;
+    z-index: 2;
+    height: auto !important;
+    overflow: visible !important;
+    padding-bottom: 2px !important;
+    margin-top: 0;
+    grid-template-areas:
+      "seeyou seeyou"
+      "legal backtop";
+    align-items: center;
+    row-gap: 10px;
+  }
+
+  .footer-back-top {
+  grid-area: backtop;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.footer-see-you {
+    justify-self: start;
+  }
+
+  .footer-back-top {
+    font-size: 12px;
+    color: #f8f7f4;
+  }
+
+  .footer-legal {
+    font-size: 11.5px;
+    color: #b5b5b5;
+  }
 }

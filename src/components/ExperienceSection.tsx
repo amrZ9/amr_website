@@ -73,15 +73,6 @@ export function ExperienceSection() {
       className="experience-section section-pad"
       data-sc-act="flow"
     >
-      <div className="ac-chapter-bar">
-        <div className="wrap ac-chapter-bar-inner">
-          <span>
-            <span className="ac-chapter-index">04</span> / EXPERIENCE
-          </span>
-          <span>CAREER ROADMAP</span>
-        </div>
-      </div>
-
       <div className="wrap" data-ac-reveal="out">
         <div className="experience-heading">
           <h2>{profile.experienceHeading}</h2>

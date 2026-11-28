@@ -402,15 +402,6 @@ export function HeroAbout() {
         </div>
       </div>
 
-      <div className="ac-chapter-bar">
-        <div className="wrap ac-chapter-bar-inner">
-          <span>
-            <span className="ac-chapter-index">01</span> / BIOGRAPHY
-          </span>
-          <span>FOUNDER &amp; GROWTH</span>
-        </div>
-      </div>
-
       <div
         id="biography"
         className="biography wrap measure-content"
@@ -426,6 +417,32 @@ export function HeroAbout() {
             {profile.rolePrimary} <span>{profile.roleSecondary}</span>
           </p>
           <div className="bio-current">
+            <a
+              href="/cv"
+              onClick={() =>
+                trackEvent("cta_click", {
+                  cta_name: "view_cv",
+                  location: "biography",
+                })
+              }
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                marginBottom: "18px",
+                fontSize: "14px",
+                fontWeight: 500,
+                color: "var(--sc-ink)",
+                textDecoration: "underline",
+                textUnderlineOffset: "4px",
+                border: "none",
+                background: "transparent",
+                padding: 0,
+              }}
+            >
+              <span>View &amp; download CV</span>
+              <ArrowUpRight size={15} aria-hidden="true" />
+            </a>
             <span>{profile.currentRole.label}</span>
             <p>
               <strong>{profile.currentRole.company}</strong>

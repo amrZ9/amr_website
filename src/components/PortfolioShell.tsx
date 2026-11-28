@@ -218,7 +218,6 @@ export function PortfolioShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div ref={rootRef} className="portfolio">
-      <div className="ac-progress-bar" aria-hidden="true" />
       <Preloader />
       <ScrollRuler />
       <Script

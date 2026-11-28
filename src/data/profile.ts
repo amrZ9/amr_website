@@ -146,7 +146,7 @@ export const profile: ProfileData = {
   socials: [
     {
       name: "LinkedIn",
-      href: "https://www.linkedin.com/in/amr-ahmed-70468520b",
+      href: "https://www.linkedin.com/in/amr-z9/",
     },
   ],
   skillsHeading: "Capabilities",

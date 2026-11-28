@@ -41,15 +41,6 @@ export function ContactSection() {
       className="contact-section section-pad"
       data-sc-act="flow"
     >
-      <div className="ac-chapter-bar">
-        <div className="wrap ac-chapter-bar-inner">
-          <span>
-            <span className="ac-chapter-index">05</span> / CONTACT
-          </span>
-          <span>GET IN TOUCH</span>
-        </div>
-      </div>
-
       <div className="wrap" data-ac-reveal="out">
         <div className="contact-layout">
           <div className="contact-opening">

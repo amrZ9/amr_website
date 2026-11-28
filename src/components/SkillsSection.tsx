@@ -8,15 +8,6 @@ export function SkillsSection() {
       className="skills-section section-pad"
       data-sc-act="flow"
     >
-      <div className="ac-chapter-bar">
-        <div className="wrap ac-chapter-bar-inner">
-          <span>
-            <span className="ac-chapter-index">02</span> / CAPABILITIES
-          </span>
-          <span>STRATEGY &amp; TOOLS</span>
-        </div>
-      </div>
-
       <div className="wrap" data-ac-reveal="out">
         <div className="skills-heading">
           <h2>{profile.skillsHeading}</h2>
