@@ -679,10 +679,19 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         const clip1Dur = HERO_FRAME_COUNT / HERO_FPS; // 10.5s
         const tHero = heroTimeRef.current;
 
-        const idx1 =
-          tHero < 0
-            ? 0
-            : Math.min(HERO_FRAME_COUNT - 1, Math.floor(tHero * HERO_FPS));
+        const idx1 = (() => {
+          if (tHero < 0) return 0;
+          if (tHero < clip1Dur) {
+            return Math.min(HERO_FRAME_COUNT - 1, Math.floor(tHero * HERO_FPS));
+          }
+          // Subtle infinite ping-pong idle loop on the final hands-in-pockets head movement (frames 98–105)
+          const idleStart = 97;
+          const idleEnd = HERO_FRAME_COUNT - 1;
+          const span = idleEnd - idleStart;
+          const idleFps = 6;
+          const step = Math.floor((tHero - clip1Dur) * idleFps) % (span * 2);
+          return step <= span ? idleEnd - step : idleStart + (step - span);
+        })();
         const heroImg = heroImgsRef.current[idx1];
 
         if (heroImg && heroImg.complete && heroImg.naturalWidth) {
