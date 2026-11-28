@@ -74,6 +74,8 @@ interface AmbientSlot {
   xRatio: number;
   lane: 0 | 1;
   def: NpcDefinition;
+  meta?: WorldNpcMeta;
+  activeLine: string | null;
   imgs: HTMLImageElement[];
   timer: number;     // 0 -> 12s lifecycle (1s fade-in, 10s hold, 1s fade/slide out)
   phase: number;
@@ -220,14 +222,22 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       return def;
     };
 
+    const pickAmbientLine = (meta?: WorldNpcMeta) => {
+      if (!meta?.topics?.length) return null;
+      return meta.topics[Math.floor(Math.random() * meta.topics.length)];
+    };
+
     const ambientSlots: AmbientSlot[] = [
       (() => {
         const def = nextAmbientDef();
+        const meta = WORLD_BY_SPRITE.get(def.id);
         return {
           side: "left",
           xRatio: 0.11,
           lane: 1,
           def,
+          meta,
+          activeLine: pickAmbientLine(meta),
           imgs: getFrames(def),
           timer: 0,
           phase: 0,
@@ -236,11 +246,14 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       })(),
       (() => {
         const def = nextAmbientDef();
+        const meta = WORLD_BY_SPRITE.get(def.id);
         return {
           side: "right",
           xRatio: 0.89,
           lane: 1,
           def,
+          meta,
+          activeLine: pickAmbientLine(meta),
           imgs: getFrames(def),
           timer: 5.5, // Staggered so left & right swap at different times
           phase: 1.5,
@@ -285,42 +298,50 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       ctx.translate(clampedX, floatY);
 
       if (style === "cloud") {
-        // Fluffy comic cloud silhouette made of overlapping scalloped puffs
-        const rx = bw / 2;
-        const ry = bh / 2;
-        const puffs: [number, number, number][] = [
-          [-rx + 10, 0, 11],
-          [rx - 10, 0, 11],
-          [-rx * 0.55, -ry + 2, 11],
-          [0, -ry, 13],
-          [rx * 0.55, -ry + 2, 11],
-          [-rx * 0.5, ry - 2, 10],
-          [0, ry - 1, 11],
-          [rx * 0.5, ry - 2, 10],
-        ];
-
-        // Outer black ink outline
-        ctx.fillStyle = "#141414";
-        puffs.forEach(([px, py, r]) => {
+        // True organic comic cloud perimeter built from scalloped lobes around an ellipse (zero boxy edges!)
+        const rx = bw / 2 + 6;
+        const ry = bh / 2 + 5;
+        const lobes = Math.max(10, Math.round((rx * 2) / 18) * 2);
+        const buildCloudPath = (scale = 1) => {
           ctx.beginPath();
-          ctx.arc(px, py, r + 1.8, 0, Math.PI * 2);
-          ctx.fill();
-        });
-        ctx.fillRect(-rx + 10, -ry - 1.5, bw - 20, bh + 3);
+          for (let i = 0; i < lobes; i++) {
+            const a0 = (i / lobes) * Math.PI * 2;
+            const a1 = ((i + 1) / lobes) * Math.PI * 2;
+            const am = (a0 + a1) * 0.5;
+            const x0 = Math.cos(a0) * rx * scale;
+            const y0 = Math.sin(a0) * ry * scale;
+            const x1 = Math.cos(a1) * rx * scale;
+            const y1 = Math.sin(a1) * ry * scale;
+            // Control point bulges outward for authentic fluffy cloud lobes
+            const bulge = 1.24 + (i % 2 === 0 ? 0.06 : -0.02);
+            const cxp = Math.cos(am) * rx * bulge * scale;
+            const cyp = Math.sin(am) * ry * bulge * scale;
+            if (i === 0) ctx.moveTo(x0, y0);
+            ctx.quadraticCurveTo(cxp, cyp, x1, y1);
+          }
+          ctx.closePath();
+        };
 
-        // Inner crisp white cloud fill
+        // Subtle ink shadow
+        ctx.save();
+        ctx.translate(1.5, 2);
+        buildCloudPath(1);
+        ctx.fillStyle = "rgba(20,20,20,0.16)";
+        ctx.fill();
+        ctx.restore();
+
+        // Crisp white cloud + ink outline
+        buildCloudPath(1);
         ctx.fillStyle = "#ffffff";
-        puffs.forEach(([px, py, r]) => {
-          ctx.beginPath();
-          ctx.arc(px, py, r, 0, Math.PI * 2);
-          ctx.fill();
-        });
-        ctx.fillRect(-rx + 10, -ry, bw - 20, bh);
+        ctx.fill();
+        ctx.strokeStyle = "#141414";
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
 
-        // Two little comic thought/cloud trailing circles below
+        // Comic cloud trailing bubbles
         [
-          [0, ry + 11, 3.6],
-          [-3, ry + 18, 2.2],
+          [-4, ry + 9, 3.8],
+          [-9, ry + 16, 2.3],
         ].forEach(([tx, ty, tr]) => {
           ctx.fillStyle = "#ffffff";
           ctx.strokeStyle = "#141414";
@@ -393,7 +414,10 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           slot.phase += dt * 2.4;
           if (slot.timer >= HOLD_TOTAL) {
             const nextDef = nextAmbientDef();
+            const nextMeta = WORLD_BY_SPRITE.get(nextDef.id);
             slot.def = nextDef;
+            slot.meta = nextMeta;
+            slot.activeLine = pickAmbientLine(nextMeta);
             slot.imgs = getFrames(nextDef);
             slot.timer = 0;
             slot.phase = 0;
@@ -611,6 +635,18 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           if (slot.flip) bCtx.scale(-1, 1);
           bCtx.drawImage(img, -targetW * 0.5, -targetH, targetW, targetH);
           bCtx.restore();
+          // Ambient vendor / character speaks out loud during their middle hold window (2.2s -> 7.8s)
+          if (slot.activeLine && slot.timer >= 2.2 && slot.timer <= 7.8) {
+            drawSpeechBubble(
+              fCtx,
+              x,
+              groundY - targetH - 22,
+              now / 1000,
+              slot.activeLine,
+              w,
+              "cloud"
+            );
+          }
         });
 
         // Midground lane (Lane 1)
@@ -655,14 +691,15 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           );
           fCtx.restore();
 
-          // 2-step Hero Intro: "Hi..." in a comic box -> "This is me, Amr." in a comic cloud!
-          const bubbleY = h - targetH - heroBottomOffset + 12;
+          // 2-step Hero Intro positioned to the right side of Amr's face (gesturing side)
+          const bubbleX = w * 0.5 + targetW * 0.38;
+          const bubbleY = h - targetH - heroBottomOffset + 46;
           if (heroTimeRef.current >= 2.1 && heroTimeRef.current < 3.6) {
-            drawSpeechBubble(fCtx, w * 0.5, bubbleY, now / 1000, "Hi...", w, "box");
-          } else if (heroTimeRef.current >= 3.6 && heroTimeRef.current <= heroDuration + 2.2) {
+            drawSpeechBubble(fCtx, bubbleX, bubbleY, now / 1000, "Hi...", w, "cloud");
+          } else if (heroTimeRef.current >= 3.6 && heroTimeRef.current <= heroDuration + 2.5) {
             drawSpeechBubble(
               fCtx,
-              w * 0.5,
+              bubbleX,
               bubbleY,
               now / 1000,
               "This is me, Amr.",

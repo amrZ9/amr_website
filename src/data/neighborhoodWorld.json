@@ -138,9 +138,9 @@
       "name": "عم صبري’s Tea Cart",
       "story": "عم صبري has poured tea on Haret El-Nakheel for twenty-three years, and remembers how everyone takes their sugar. He opens before sunrise, warms the glasses, and keeps one small table free for people who need to talk. The morning crowd finds him before they find their offices, schools, or errands. He is famous for giving advice nobody requested and credit nobody can quite repay. He keeps a quiet tab for the delivery rider كريم and saves the strongest tea for الحاج فؤاد after backgammon. If two neighbors stop speaking, عم صبري usually finds a reason to put their glasses on the same tray.",
       "topics": [
-        "Ya صباح الفل; tea first, problems later.",
-        "I saw you yesterday saying the same thing, ya basha.",
-        "Sugar? I know your answer, don't pretend."
+        "يا صباح الفل يا أهل الحارة! الشاي سخن والدماغ رايقة، مين يشرب؟",
+        "شاي مظبوط يا أستاذ؟ سكر زيادة ولا على الريحة؟",
+        "اتفضلوا يا جماعة، كباية الشاي تروق القلب وتفك الزحمة."
       ],
       "connections": [
         "NPC-22",
@@ -167,9 +167,9 @@
       "name": "عم رجب’s Corn Cart",
       "story": "عم رجب parks his corn cart beneath the old neem tree just as the afternoon heat begins to soften. He turns each cob slowly and knows which children like extra salt and which adults pretend they are only buying for the kids. His corner sits between the football wall and the lane leading to the bus stop. He is known for settling tiny arguments by offering both sides the same hot cob. The young footballers gather here after practice, while the traffic officer buys one when his shift finally eases. He insists that a good corn cob can repair almost any bad day, except perhaps a lost football match.",
       "topics": [
-        "Hot corn! Who wants the first one?",
-        "Don't tell me you're not hungry; your eyes already ordered.",
-        "A little salt fixes more than you think."
+        "ذرة سخنة يا حبايب! بالملح والليمون، والريحة شاهدة!",
+        "مين عايز كوز سخن؟ لسه طالع من على النار!",
+        "اتفضل يا كابتن، دي ذرة تظبط المود بعد الماتش."
       ],
       "connections": [
         "NPC-46",
@@ -196,9 +196,9 @@
       "name": "زياد, the Corn-Selling Kid",
       "story": "زياد is عم رجب's quick-footed nephew, helping at the corn cart whenever school finishes. He spends the early afternoon carrying napkins, collecting coins, and trying to sneak a kick with any loose ball. After his shift he runs toward the narrow court behind the bakery to meet his friends. He is famous for remembering every customer's order and every football score, even when he gets both wrong. His uncle trusts him with the cart, and the football juggler lets him practice tricks when the street is quiet. زياد dreams of becoming a professional player but still considers the corn cart his first team.",
       "topics": [
-        "Extra salt for you, as usual!",
-        "I scored three yesterday; ask anyone. Okay, ask someone honest.",
-        "Uncle says finish the work first, but the match is starting!"
+        "ذرة يا ذرة! سخنة وحلوة، تعالى يا بطل!",
+        "عمو رجب، أنا خلصت الطلبات! مين بعده؟",
+        "يا كابتن، علمني حركة كورة وأنا أديك كوز ذرة."
       ],
       "connections": [
         "NPC-02",
@@ -225,9 +225,9 @@
       "name": "الحاجة سعاد’s Fruit Cart",
       "story": "الحاجة سعاد runs the fruit cart beside the pharmacy and can tell a ripe mango by touch alone. She arrives with the wholesale truck, arranges the fruit by color, and keeps the best oranges for familiar faces. Her day is a steady stream of mothers, office workers, and neighbors buying just one more thing. She is known for slipping an extra guava into a child's bag and refusing to let anyone choose a bruised peach. أم مريم buys fruit from her every Thursday, and the tourist with the folded map still owes her for two pomegranates. She knows most family news from shopping lists and never repeats anything that was not hers to tell.",
       "topics": [
-        "Take these; they're sweet today, wallahy.",
-        "Tell your mother I kept the good oranges.",
-        "A fruit basket is cheaper than a doctor and much nicer."
+        "يا فاكهة يا طازة! مانجا وجوافة وبرتقال، تعالى اختار!",
+        "الخوخ مسكر النهارده، جرب بنفسك يا باشا!",
+        "خد البرتقال الحلو ده، وبلّغ ماما إن عندي أحلى حاجة."
       ],
       "connections": [
         "NPC-47",
@@ -254,9 +254,9 @@
       "name": "فرن عم حنفي",
       "story": "فرن عم حنفي has fed Haret El-Nakheel since before the new apartment block was built. He starts before dawn, pulls baladi loaves from the oven, and knows the sound of every regular's knock. The queue stretches past the doorway on school mornings and shrinks only after the last delivery van leaves. He is known for giving the warmest loaf to whoever looks most exhausted. The carpenter محمود collects bread for his workshop, while أم مريم sends her daughter to fetch the afternoon batch. The oven is the neighborhood clock: when its first bread comes out, the street officially wakes up.",
       "topics": [
-        "Careful, it's still hot!",
-        "Your usual stack? I already counted it.",
-        "Tell the little ones the first loaf is for sharing."
+        "عيش بلدي سخن يا حبايب! لسه خارج من الفرن!",
+        "العيش سخن، خد بالك من إيدك يا ابني!",
+        "اللي عايز عيش طازة يقرب، والرزق على الله."
       ],
       "connections": [
         "NPC-25",
@@ -283,9 +283,9 @@
       "name": "قهوة المعلم جابر’s Shisha Corner",
       "story": "المعلم جابر keeps the shisha corner at the back of قهوة النخيل, where the older regulars claim the same chairs every evening. He changes the coals, listens more than he speaks, and can identify a regular by the sound of his footsteps. The corner fills after sunset with dominoes, football debates, and stories that grow longer each time they are told. He is known for ending arguments with a fresh round and a reminder that tomorrow everyone will still live on the same street. الحاج فؤاد is his oldest customer, while عم صبري sends over tea whenever the backgammon game gets too loud. The corner is a social archive, and جابر remembers every friendship, feud, and unfinished apology.",
       "topics": [
-        "Same seat, same flavor, same argument?",
-        "Lower your voice; the whole street already knows.",
-        "One more round, then go home before your wife calls."
+        "اتفضل يا معلم، القعدة جاهزة والحجر مولع!",
+        "بالراحة يا جماعة، الشيشة مش هتطير والليلة لسه طويلة.",
+        "كل يوم نفس الخناقة على الطاولة، وكل يوم بترجعوا أصحاب."
       ],
       "connections": [
         "NPC-07",
@@ -312,9 +312,9 @@
       "name": "الحاج فؤاد at قهوة النخيل",
       "story": "الحاج فؤاد is the retired railway clerk whose morning chair at قهوة النخيل is treated like public property. He arrives with the newspaper folded under his arm and orders tea without looking at the menu. He spends the day greeting passersby, correcting dates, and saving his sharpest opinions for the evening crowd. He is known for knowing everyone's grandfather and insisting that the street was better before the new paving. He taught عم صبري how to keep accounts and still challenges the backgammon table whenever he spots a weak player. His memory is the neighborhood's unofficial registry, though his version of events is not always the most accurate.",
       "topics": [
-        "I remember when this whole block was two shops and a donkey.",
-        "Read the headline, not just the picture, ya walad.",
-        "Your father was exactly like you; don't argue."
+        "صباح الخير يا ولاد، الجرنال معايا والشاي جاي!",
+        "زمان كان الشارع أهدى، بس الناس الحلوة لسه هي هي.",
+        "اقرأ الخبر للآخر قبل ما تحكم يا ابني."
       ],
       "connections": [
         "NPC-06",
@@ -341,9 +341,9 @@
       "name": "عم ناصر’s Quiet Bench",
       "story": "عم ناصر is a soft-spoken retired geography teacher who claims the bench opposite the old plane tree. He sits there after lunch with a small notebook, sketching street corners and watching the neighborhood move. People come to him for directions, calm advice, or simply a few minutes away from the noise. He is known for drawing maps on the backs of receipts and remembering every shortcut between the main road and the market. The tourist often asks him for help, and the laptop coder sometimes joins him to discuss how the street has changed. He believes a neighborhood is best understood by walking it slowly, not by looking at it from a car.",
       "topics": [
-        "Every street has a shortcut; every shortcut has a story.",
-        "Sit a minute, ya basha; you're walking like you're late for yesterday.",
-        "North is that way, unless the roadworks moved it again."
+        "اقعد يا ابني وخد نفسك، مش كل مشوار محتاج جري.",
+        "كل شارع ليه حكاية، واللي يمشي على مهله يشوفها.",
+        "عايز أقصر طريق؟ تعالى أرسملك الخريطة على ورقة."
       ],
       "connections": [
         "NPC-52",
@@ -370,9 +370,9 @@
       "name": "The Backgammon Table",
       "story": "The backgammon table belongs to a rotating committee of uncles, but الحاج فؤاد and عم جابر treat it as their personal championship ground. The dice begin rolling after the afternoon prayer and keep going until the tea glasses are empty. A small audience gathers whenever a match becomes close, especially when عم صبري predicts the losing move. The table is known for loud accusations of bad luck, suspicious dice, and very selective memories. عم جابر brings the shisha crowd, while كريم the delivery rider sometimes stops to watch before his next order. Nobody has agreed on the official champion because the last game is always postponed until tomorrow.",
       "topics": [
-        "The dice don't lie; your strategy does.",
-        "Double six! Now remember who taught you.",
-        "We were winning before you started giving advice."
+        "يلا يا رجالة، طاولة النهارده هتبيّن مين الأستاذ!",
+        "ستة وستة! اهو الحظ رجع لأصحابه!",
+        "النرد مش بيكدب، بس في ناس بتحب تلومه على كل حاجة."
       ],
       "connections": [
         "NPC-07",
@@ -399,9 +399,9 @@
       "name": "Newspaper Table at قهوة النخيل",
       "story": "أستاذ سامح reads the newspaper at the front table every morning before opening his stationery shop. He circles headlines with a blue pen and leaves the paper folded open for anyone who wants to catch up. The table attracts commuters, retired neighbors, and people waiting for someone who is always late. He is known for turning every headline into a ten-minute debate and every debate into a lesson in punctuation. الحاج فؤاد checks his facts, and the young coder occasionally asks him to explain an old political cartoon. The newspaper table is where rumors are tested against print, although the arguments rarely end with agreement.",
       "topics": [
-        "It's on page three; nobody reads page three anymore.",
-        "Bring evidence, not your cousin's WhatsApp forward.",
-        "The headline is dramatic; the story is usually less exciting."
+        "الجرنال وصل يا جماعة! أخبار النهارده على الترابيزة.",
+        "اقرأ الخبر كله قبل ما تبعت العنوان على جروب العيلة.",
+        "يا حاج فؤاد، تعالى شوف الخبر ده وقولي رأيك."
       ],
       "connections": [
         "NPC-07",
@@ -428,9 +428,9 @@
       "name": "بنات القهوة Corner",
       "story": "منى and هبة run the small women-friendly café terrace near the tailor, with two tables and a dependable pot of mint tea. They open late morning, remember everyone's preferred seat, and keep a spare phone charger behind the counter. Their corner is a welcoming pause for mothers, students, and women between errands. They are known for practical advice, sharp humor, and a strict rule that nobody leaves without eating something. أم مريم meets her sister here, and the woman in the abaya often stops to charge her phone and share a voice note. Their café quietly connects households that might otherwise only wave from opposite balconies.",
       "topics": [
-        "Come sit; you look like you need five minutes.",
-        "Show me the message, but don't send the reply yet.",
-        "Mint tea first, family drama second."
+        "اتفضلوا يا بنات، الشاي بالنعناع جاهز والقعدة مستنياكم.",
+        "تعالي اقعدي خمس دقايق، شكلك محتاجة تفصلي من الزحمة.",
+        "الشاحن موجود، والشاي موجود، والحكاوي من غير حساب."
       ],
       "connections": [
         "NPC-25",
@@ -457,9 +457,9 @@
       "name": "أمين the Traffic Officer",
       "story": "أمين is the traffic officer assigned to the junction where Haret El-Nakheel meets the busy avenue. He works the morning rush, guides school vans through the bottleneck, and tries to keep delivery bikes off the pavement. At midday he takes a short break near عم رجب's corn cart before returning to the crossing. He is known for being fair but stubborn, especially with drivers who think hazard lights are a parking permit. كريم the delivery rider knows his warnings by heart, and the walking officer حسن is his cousin from another district. Despite the complaints, أمين knows the street's children by name and always stops traffic for the elderly.",
       "topics": [
-        "Ya ustaz, the road is not your private living room.",
-        "Helmet first, delivery second.",
-        "Cross now, habibti; I'll hold the cars."
+        "على مهلك يا أستاذ! الشارع مش موقف انتظار!",
+        "افتح الطريق يا سائق، الناس عايزة تعدّي!",
+        "استنوا يا جماعة، هعدّي الأطفال الأول وبعدها الطريق ليكم."
       ],
       "connections": [
         "NPC-22",
@@ -486,9 +486,9 @@
       "name": "كريم’s Delivery Bike Stop",
       "story": "كريم's red delivery bike is almost a permanent landmark beside the phone-repair kiosk. He parks for a minute between orders, checks the app, and asks the nearby shops whether anyone needs a quick pickup. His route loops between the bakery, the apartments, and the main road all day. He is known for arriving fast, remembering apartment numbers, and owing عم صبري exactly three cups of tea. He is friends with the football boys and gets gentle warnings from أمين whenever he cuts a corner too sharply. When كريم is parked, somebody is always handing him a parcel, a snack, or a piece of neighborhood news.",
       "topics": [
-        "One minute, boss; the next order is already calling.",
-        "Who's sending something to building seven?",
-        "Put it on my tea tab; I know, I know."
+        "توصيل يا جماعة! مين مستني أوردر؟",
+        "وسعوا الطريق يا حبايب، فيه طلب سخن لازم يوصل!",
+        "دقيقة واحدة أراجع العنوان وأطير على المشوار."
       ],
       "connections": [
         "NPC-22",
@@ -515,9 +515,9 @@
       "name": "عصير عم سيد",
       "story": "عم سيد presses sugarcane beside the bus stop, where the machine's cheerful rattle can be heard halfway down the block. He opens after noon, washes every glass himself, and keeps lemons chilled for customers who prefer a sharper taste. Students, drivers, and tired shoppers gather there when the afternoon sun becomes too much. He is known for remembering who wants extra lemon and who always says they are on a diet before ordering two cups. The football friends stop after practice, and the tourist discovered the stall after asking for something cold. His best customers are the ones who bring their own reusable bottles and stay long enough to hear the latest score.",
       "topics": [
-        "Sugarcane, fresh and cold! Lemon or no lemon?",
-        "You said one cup last time; I remember two.",
-        "Heat like this needs a proper solution."
+        "قصب ساقع يا حبايب! كباية ترد الروح!",
+        "قصب بالليمون ولا سادة؟ اتفضل، كله فريش!",
+        "الحر ده ملوش حل غير كوباية قصب متلجة!"
       ],
       "connections": [
         "NPC-46",
@@ -544,9 +544,9 @@
       "name": "أبو ياسين’s Ta'ameya Cart",
       "story": "أبو ياسين fries ta'ameya beside the alley entrance and claims his green mixture has never changed in thirty years. He starts before sunrise, serves commuters in paper sleeves, and keeps the crispest pieces for the schoolchildren. The queue is short but constant, especially when the factory shift changes. He is known for giving كريم an extra sandwich while loudly reminding him about the money he owes. كريم's debt is legendary, and the carpenter محمود buys breakfast for his crew whenever a job starts early. أبو ياسين says he trusts people more than notebooks, which is why everyone knows exactly who owes him.",
       "topics": [
-        "Fresh batch! Don't let it get cold.",
-        "Kareem, today is a beautiful day to remember your debt.",
-        "One extra piece for the road; don't tell the others."
+        "طعمية سخنة يا بيه! قرمشة من بره وطراوة من جوه!",
+        "عيش وطعمية سخنة! تعالى قبل ما الصينية تخلص!",
+        "يا كريم، الحساب القديم الأول وبعدين نزودلك ساندوتش!"
       ],
       "connections": [
         "NPC-22",
@@ -573,9 +573,9 @@
       "name": "نور’s Foul Cart",
       "story": "نور took over the foul cart from her father and made its morning queue the most cheerful one on the street. She prepares the beans before dawn, labels the spice jars, and remembers which regular wants oil and which wants lemon. She serves students and workers until the first rush is over, then walks her little brother to school. She is known for refusing to rush a sandwich and for correcting anyone who calls her cart her father's business. أم مريم trusts her with breakfast orders, and زياد sometimes helps carry supplies when his uncle's corn cart is quiet. نور is saving to open a small breakfast shop of her own without leaving the neighborhood that raised her.",
       "topics": [
-        "Beans, lemon, cumin — tell me your combination.",
-        "I'm the boss now, ya جماعة; Baba is only the consultant.",
-        "Take two; the second one is for whoever is late."
+        "فول سخن يا صباح الفل! بالزيت والليمون والكمون!",
+        "ساندوتش فول على السريع؟ عندي اللي يشبعك لحد الضهر!",
+        "يا جماعة الفول جاهز، واللي مستعجل طلبه هيتعمل حالًا!"
       ],
       "connections": [
         "NPC-25",
@@ -602,9 +602,9 @@
       "name": "باسم’s Evening Fruit Stand",
       "story": "باسم sets up a smaller fruit stand near the alley at dusk, specializing in whatever the wholesale market had left at a good price. He weighs carefully, keeps a notebook of neighborhood orders, and sends unsold fruit to the juice shop next door. His busiest hour is when families return from work and remember they have guests coming. He is known for his dramatic sales pitches and his habit of calling every customer 'ya rayyes'. الحاجة سعاد taught him how to choose produce, while the woman in the abaya orders fruit for her mother's house. The two fruit sellers pretend to compete, but they share transport costs and warn each other about bad deliveries.",
       "topics": [
-        "Ya rayyes, look at these peaches!",
-        "Good price today; tomorrow I make no promises.",
-        "Tell Haga Souad I saved her the small oranges."
+        "فاكهة المساء يا حبايب! تفاح وموز وبرتقال!",
+        "يا ريس، تعالى شوف الأسعار الحلوة قبل ما البضاعة تخلص!",
+        "يا حاجة سعاد، خليتلك البرتقال الصغير اللي بتحبيه."
       ],
       "connections": [
         "NPC-04",
@@ -631,9 +631,9 @@
       "name": "يوسف the Laptop Coder",
       "story": "يوسف is a freelance developer who works from the café-side public table because his apartment internet drops whenever it rains. He arrives with headphones, a battered laptop, and a coffee he forgets to drink while debugging. Between calls he walks to عم ناصر's bench to clear his head and then returns to finish client work. He is known for fixing phones, explaining apps to older neighbors, and insisting that the street has better Wi-Fi than people expect. أستاذ سامح asks him about online news, and the tourist once mistook his laptop stickers for a map of the city. يوسف wants to build a useful local-services app and has already tested the idea with half the shopkeepers.",
       "topics": [
-        "It's not broken; it's just thinking.",
-        "If the Wi-Fi drops again, I'm moving to the bakery.",
-        "Tell me what you need the app to do, not what color it should be."
+        "ثانية واحدة يا جماعة، الكود قرب يشتغل!",
+        "اللي عنده مشكلة في الموبايل أو التطبيق ييجي نسأل ونشوف.",
+        "الواي فاي فصل تاني؟ واضح إن الفرن عنده إنترنت أحسن مني."
       ],
       "connections": [
         "NPC-08",
@@ -660,9 +660,9 @@
       "name": "أم مريم and ابنها علي",
       "story": "أم مريم and her son علي are a familiar morning pair, moving through the street with a schoolbag, shopping list, and a little hurry. She buys bread, fruit, and breakfast in a fixed order, while علي tries to negotiate one treat at every stop. They are usually headed toward the school gate before the traffic becomes difficult. They are known for علي's endless questions and his mother's ability to answer while carrying six bags. نور prepares their breakfast, عم حنفي keeps the warm bread aside, and أمين helps them cross safely. Their route is so predictable that the vendors can tell the time by the moment علي asks for a sweet.",
       "topics": [
-        "Ali, one treat means one treat.",
-        "Good morning! Keep the warm bread for us, ya Heneifi.",
-        "I have a list; he has a completely different list."
+        "يلا يا علي، العيش الأول وبعده نروح المدرسة.",
+        "صباح الخير يا نور، طلبنا المعتاد لو سمحتي!",
+        "يا علي، اتفقنا على حاجة حلوة واحدة مش المحل كله."
       ],
       "connections": [
         "NPC-05",
@@ -689,9 +689,9 @@
       "name": "عم شريف and سلمى",
       "story": "عم شريف walks his daughter سلمى to her afternoon art lesson, carrying her sketchbook when she gets tired. They stop at the sugarcane stall on warm days and take the quieter lane past the bench. He is headed to the repair shop afterward, while سلمى is usually thinking about what she will draw next. They are known for turning ordinary errands into small drawing lessons about signs, trees, and shopfronts. عم ناصر encourages her sketches, and باسم saves colorful fruit labels for her collage projects. عم شريف believes the neighborhood should be seen through his daughter's curious eyes, not only crossed in a hurry.",
       "topics": [
-        "What would you draw if this wall could talk?",
-        "One juice, two straws, and no rushing.",
-        "Show Uncle Nasser your new sketch when we pass."
+        "بص يا سلمى، الشارع ده مليان تفاصيل تستاهل رسمة.",
+        "كوباية قصب واتنين شفاطات، وبعدها نكمل المشوار.",
+        "ورّي عم ناصر الرسمة الجديدة، هيفرح بيها."
       ],
       "connections": [
         "NPC-08",
@@ -718,9 +718,9 @@
       "name": "عم مسعد the Street Sweeper",
       "story": "عم مسعد sweeps Haret El-Nakheel before the shops open and knows which balconies wake up earliest. He clears leaves, moves stray boxes out of the walking path, and leaves the pavement neat around the bakery queue. He works slowly but steadily, stopping to help anyone carrying something heavy. He is known for greeting every child, returning lost coins, and quietly repairing small things nobody notices. عم حنفي saves him fresh bread, and أمين makes sure cars do not block the stretch he has just cleaned. The children call him 'the street's morning uncle', and he pretends not to enjoy the title.",
       "topics": [
-        "Easy, ya basha; the pavement is clean now.",
-        "I found this coin; ask around before it grows legs.",
-        "A clean street starts with one person and one broom."
+        "صباح الخير يا أهل الحارة، خلّوا السكة نضيفة!",
+        "خلي بالك من الرصيف يا ابني، لسه منظفه.",
+        "الشارع بيتنضف بإيدينا كلنا، مش بالمكنسة بس."
       ],
       "connections": [
         "NPC-05",
@@ -747,9 +747,9 @@
       "name": "محمود the Carpenter",
       "story": "محمود is a carpenter whose workshop sits two streets behind the bakery. He crosses Haret El-Nakheel each morning carrying a tape measure and a folded list of materials. He is usually headed to a renovation job, though he always detours for a quick breakfast. Neighbors know him for repairing loose doors without charging elderly residents. He buys ta'ameya from أبو ياسين, collects bread for his crew, and owes عم صبري for several emergency teas. He is proud of his work but never proud enough to refuse a useful tip from الحاج فؤاد.",
       "topics": [
-        "Morning, ya جماعة; the wood won't cut itself.",
-        "If a door squeaks, call me before you replace it.",
-        "A good carpenter measures twice and drinks tea three times."
+        "Morning, everyone. The workshop can wait five minutes for a proper breakfast.",
+        "If a door starts squeaking, call me before you replace it.",
+        "Measure twice, cut once, then take a tea break."
       ],
       "connections": [
         "NPC-15",
@@ -776,9 +776,9 @@
       "name": "داليا the Pharmacy Student",
       "story": "داليا studies pharmacy and lives with her aunt in the apartment above the tailor. She walks briskly with flashcards in one hand and a tote bag full of notes in the other. Most days she is headed to the bus stop for university, but she returns before sunset to help her aunt. She is known for explaining medicine labels patiently and for correcting the café's exaggerated health advice. She buys fruit from الحاجة سعاد and sometimes studies beside يوسف when the café is quiet. Her aunt says she has a timetable for everything except falling asleep over her books.",
       "topics": [
-        "I have an exam, but the street has other plans.",
-        "Please read the label before forwarding health advice.",
-        "One mango, then back to pharmacology."
+        "I have an exam tomorrow, and somehow everyone has a question for me today.",
+        "Please read the label before forwarding medical advice.",
+        "One mango, then straight back to my notes."
       ],
       "connections": [
         "NPC-04",
@@ -805,9 +805,9 @@
       "name": "حسن the Tailor",
       "story": "حسن is the young tailor who inherited his father's narrow shop near the women-friendly café. He walks the block collecting measurements, returning altered clothes, and delivering urgent repairs. He is usually headed between the apartment buildings and his shop with a measuring tape around his neck. He is known for fixing school uniforms overnight and for pretending he cannot hear customers asking for discounts. منى and هبة send customers his way, while أم مريم trusts him with علي's school trousers. He and يوسف are quietly collaborating on a simple online booking page for the shop.",
       "topics": [
-        "It only needs a small adjustment, wallahy.",
-        "Come tomorrow; today the sewing machine is winning.",
-        "A good fit changes the whole day."
+        "It only needs a small adjustment; no need to buy a new one.",
+        "Come back tomorrow and it will be ready. The sewing machine and I have an agreement.",
+        "A good fit can change your whole day."
       ],
       "connections": [
         "NPC-11",
@@ -834,8 +834,8 @@
       "name": "أم مريم’s Neighbor, نجلاء",
       "story": "نجلاء is a school administrator who lives in the next building and treats the morning street like an extension of the school corridor. She walks with a folder tucked under her arm, greeting parents and checking whether children have crossed safely. She is headed to the school gate before the first bell, then returns for errands in the afternoon. She is known for remembering every child's name and every parent's unfinished form. She shares the bread queue with أم مريم and often buys breakfast from نور when the school day starts early. She quietly helps عم مسعد keep the pavement clear around the school route.",
       "topics": [
-        "The permission slip is still in your bag, I can tell.",
-        "Good morning, little champions; no running near the road.",
+        "The permission slip is still in your bag. I can tell.",
+        "Good morning, everyone. Let's get to school before the traffic builds up.",
         "I'll see you at the gate, not five minutes after the bell."
       ],
       "connections": [
@@ -863,9 +863,9 @@
       "name": "طارق the Office Commuter",
       "story": "طارق works in an insurance office downtown and measures his mornings in missed buses. He walks fast with a laptop bag, checks his watch at every corner, and still stops to greet familiar vendors. He is headed to the main avenue, usually promising himself that tomorrow he will leave earlier. He is known for being punctual at work and late to every neighborhood gathering. عم صبري knows his exact tea order, and أمين regularly waves him across the junction. He is the unofficial messenger between the street and the office towers because he carries everyone's small requests downtown.",
       "topics": [
-        "If I miss this bus, tell them I tried.",
-        "Same tea, no time, please.",
-        "Tomorrow I'll leave early; yes, I said that yesterday."
+        "If I miss this bus, please tell the office I did my best.",
+        "Same tea as always, please. I'm already late.",
+        "Tomorrow I'll leave earlier. I mean it this time."
       ],
       "connections": [
         "NPC-01",
@@ -892,9 +892,9 @@
       "name": "مها the Flower Seller",
       "story": "مها sells flowers from a small kiosk near the bus stop and walks the street to deliver special orders. She carries wrapped bouquets carefully, keeping the stems shaded beneath a light cloth. She is headed to a birthday delivery in the apartment blocks before returning to the kiosk. She is known for remembering anniversaries and for adding one extra flower when someone looks nervous. باسم saves her the freshest small roses, and عم ناصر helps her find the quickest delivery route. She has a habit of leaving a single flower on the bench for anyone having a difficult day.",
       "topics": [
-        "These are for a happy occasion, even if you haven't planned one.",
-        "A little color makes the whole street kinder.",
-        "Tell me the name and I'll make it look like you remembered."
+        "A little color makes an ordinary day feel special.",
+        "Tell me the occasion and I'll find the right flowers.",
+        "Take this extra flower. Someone might need a smile today."
       ],
       "connections": [
         "NPC-17",
@@ -921,9 +921,9 @@
       "name": "كريم the Delivery Rider",
       "story": "كريم is the neighborhood delivery rider whose phone seems to ring before he has finished parking. He weaves between shops collecting parcels and food orders, trying to keep every promised arrival time. His route takes him from the bakery to the avenue and back through the market lane. He is known for speed, charm, and a legendary unpaid ta'ameya tab. أبو ياسين keeps his debt tally, عم صبري keeps his tea tally, and أمين keeps his traffic warnings ready. He insists that one day he will pay everybody back in a single glorious afternoon, although nobody believes him.",
       "topics": [
-        "I'm not late; the traffic is early.",
-        "Put it on the tab, Abu Yassin; last time, I mean it.",
-        "Which building? I know every balcony by now."
+        "I'm not late; the traffic just started early today.",
+        "I'll settle that tab soon. Abu Yassin has heard this promise before.",
+        "Which building? I know every entrance on this street."
       ],
       "connections": [
         "NPC-15",
@@ -950,9 +950,9 @@
       "name": "سلمى the Art Student",
       "story": "سلمى is عم شريف's daughter, an art student who sketches the street in the margins of her notebooks. She walks with a pencil behind her ear and pauses whenever a shopfront catches the afternoon light. She is usually headed to her lesson or to the bench to show عم ناصر a new drawing. She is known for drawing people kindly, including the ones who insist they are not posing. عم شريف accompanies her, and باسم saves bright fruit labels for her collage work. She wants to paint a giant mural of the neighborhood once she convinces the building owners to agree.",
       "topics": [
-        "Hold still for two seconds; it's for the sketch.",
-        "That wall has the best colors at sunset.",
-        "Baba says we're late, but this light won't wait."
+        "Hold still for a second; I want to sketch this light.",
+        "That old wall has the best colors in the afternoon.",
+        "Dad says we're late, but this view won't wait."
       ],
       "connections": [
         "NPC-20",
@@ -979,7 +979,7 @@
       "name": "عمرو the Football Coach",
       "story": "عمرو coaches the teenagers on the dusty court behind the bakery after finishing his shift at a sports shop. He walks with a whistle around his neck and a ball tucked beneath one arm. He is headed to collect the younger players before evening practice. He is known for fair teams, loud encouragement, and refusing to let anyone blame the referee for a missed pass. The football pair listens to him, زياد follows him around, and عم رجب saves corn for the team. He once played semi-professionally and still demonstrates a perfect first touch whenever the street gives him room.",
       "topics": [
-        "Warm up first; heroes pull muscles too.",
+        "Warm up first. Even the best players pull muscles.",
         "Pass the ball, not the blame.",
         "Practice ends when the streetlights come on."
       ],
@@ -1008,9 +1008,9 @@
       "name": "سعيد the Building Doorman",
       "story": "سعيد is the doorman of the oldest apartment building on the block and knows every visitor's business only when invited. He walks the street collecting parcels, checking on elderly residents, and buying small household supplies. He is headed to deliver a package upstairs before returning to his chair by the entrance. He is known for finding lost keys and for keeping spare umbrellas during sudden winter rain. كريم leaves parcels with him, and عم مسعد trusts him to move bins away from the clean pavement. His greatest talent is making people feel that somebody is keeping an eye on the building without watching too closely.",
       "topics": [
-        "Package for apartment six; signature not required.",
-        "Take the umbrella; bring it back whenever.",
-        "Everybody is home eventually, just at different times."
+        "Package for apartment six. Please make sure it reaches the right person.",
+        "Take the umbrella. Bring it back whenever you can.",
+        "Everyone gets home eventually; some people just take the scenic route."
       ],
       "connections": [
         "NPC-13",
@@ -1037,8 +1037,8 @@
       "name": "هاني the Phone Repairman",
       "story": "هاني repairs phones from a tiny kiosk opposite the delivery-bike stop. He walks between suppliers and customers carrying a small tool case and a screen protector roll. He is headed to collect a replacement battery before the afternoon rush. He is known for reviving phones everyone else has declared dead and for refusing to repair cracked screens with tape. يوسف sends him software problems, and كريم brings him devices dropped during deliveries. He and the tourist once spent twenty minutes translating a map app into understandable directions.",
       "topics": [
-        "Don't press it harder; it's already broken.",
-        "Back up your photos before you blame the phone.",
+        "Don't press it harder; that won't fix the screen.",
+        "Back up your photos before blaming the phone.",
         "Give me ten minutes and a little patience."
       ],
       "connections": [
@@ -1066,9 +1066,9 @@
       "name": "فاطمة the Home Baker",
       "story": "فاطمة bakes cakes and savory pastries from her family kitchen and delivers orders around the neighborhood. She walks with a covered tray balanced carefully in both hands, stopping only when someone offers to help. She is headed to the women-friendly café with a birthday order for one of its regulars. She is known for generous portions and for writing names on cakes in handwriting better than the bakery's sign. منى and هبة sell her pastries at the café, while عم حنفي lends her oven space when she has a large order. She hopes to open a tiny pastry counter beside the bakery without turning the street into a queue of hungry cousins.",
       "topics": [
-        "Careful, it's still warm and the icing is delicate.",
-        "I made extra; birthdays never arrive alone.",
-        "Tell me the name twice so I spell it right."
+        "Careful, the tray is warm and the icing is delicate.",
+        "I made extra pastries. Good news always brings visitors.",
+        "Tell me the name twice so I spell it correctly."
       ],
       "connections": [
         "NPC-11",
@@ -1095,9 +1095,9 @@
       "name": "مينا the Stationery Shop Owner",
       "story": "مينا owns the stationery shop beside the newspaper table and sells everything from school notebooks to emergency phone chargers. He walks the block checking deliveries, collecting payments, and asking parents what the school needs next. He is headed to the wholesaler with a handwritten list tucked into his shirt pocket. He is known for giving children a free pencil when they have forgotten theirs and for keeping exact change. أستاذ سامح shares the newspaper table with him, and نجلاء sends parents to his shop for school supplies. He keeps a box of old notebooks for children who need them but would never ask in front of their friends.",
       "topics": [
-        "A new notebook is a fresh start, ya habibi.",
+        "A new notebook is a fresh start.",
         "Exact change? I knew I liked you.",
-        "Tell the teacher we have the blue folders now."
+        "The blue folders have arrived. Tell the teacher."
       ],
       "connections": [
         "NPC-10",
@@ -1126,7 +1126,7 @@
       "topics": [
         "This tune needs one more cup of tea.",
         "You can't rush a song or a good conversation.",
-        "If you hear me practicing, that's the lesson, not a concert."
+        "If you hear me practicing, that's a lesson, not a concert."
       ],
       "connections": [
         "NPC-01",
@@ -1154,8 +1154,8 @@
       "story": "أحمد works at a small accounting office near the avenue and still helps his father's grocery shop after work. He walks with receipts folded in his pocket and a calculator app open on his phone. He is headed to the bank before returning to help with the evening stock count. He is known for calculating discounts in his head and for being unable to relax when a bill is split unevenly. باسم gives him supplier prices, and عم صبري jokes that he should calculate the tea tab before ordering. He is building a simple ledger for the street vendors so they can track stock without losing their handwritten charm.",
       "topics": [
         "Give me the total; I'll check it in my head.",
-        "A small leak in the accounts becomes a big problem.",
-        "No, the discount is not free money."
+        "A small mistake in the accounts can become a big problem.",
+        "A discount is not the same thing as free money."
       ],
       "connections": [
         "NPC-17",
@@ -1183,7 +1183,7 @@
       "story": "رانيا is a nurse at the nearby clinic and lives above her parents' apartment. She walks home after a long shift with her hair tied back and a small grocery list in her pocket. She is headed to buy fruit before checking on an elderly neighbor. She is known for practical first aid, calm explanations, and reminding everyone to drink water. الحاجة سعاد saves her fresh fruit, and عم مسعد asks her to check on residents who have been unwell. She rarely talks about work unless someone needs help, because she wants the street to feel like home rather than another clinic.",
       "topics": [
         "Have some water before you tell me the whole story.",
-        "It's probably nothing, but let's be sensible.",
+        "It's probably nothing, but let's be sensible and check.",
         "I'm off duty, but I can still find a bandage."
       ],
       "connections": [
@@ -1212,8 +1212,8 @@
       "story": "وليد drives a white taxi and knows the fastest route from Haret El-Nakheel to almost anywhere in the city. He walks the block between fares to stretch his legs and collect the tea he keeps forgetting to drink. He is usually headed back to the main road where passengers wait near the bus stop. He is known for his stories, his immaculate dashboard, and his strong opinions about every road closure. أمين gives him updates about the junction, and عم سيد keeps a cold sugarcane juice ready on hot afternoons. He claims he has never been lost, only temporarily introduced to a different street.",
       "topics": [
         "The shortcut is shorter if you trust me.",
-        "Traffic is a living creature; today it's angry.",
-        "Where to? I know a way, maybe two."
+        "Traffic is a living creature, and today it's in a bad mood.",
+        "Where are you going? I probably know a way."
       ],
       "connections": [
         "NPC-12",
@@ -1242,7 +1242,7 @@
       "topics": [
         "A book is a window you can carry home.",
         "I marked your essay, not your entire personality.",
-        "Bring one book and take another; that's the rule."
+        "Bring one book and take another. That's the only rule."
       ],
       "connections": [
         "NPC-08",
@@ -1269,9 +1269,9 @@
       "name": "شادي the Mechanic",
       "story": "شادي repairs scooters and small motorcycles in a workshop near the avenue. He walks the street collecting spare parts and checking on customers whose engines he recently fixed. He is headed to the delivery-bike stop to inspect كريم's noisy chain. He is known for diagnosing an engine by sound and for teasing anyone who says a vehicle only needs a quick look. كريم trusts him with the bike, and أمين asks him to remind riders to keep their lights working. He and هاني sometimes trade tools when a repair needs both mechanical and electronic patience.",
       "topics": [
-        "That sound is not normal; don't tell me it's always sounded like that.",
-        "Bring it by before it becomes a bigger problem.",
-        "A scooter needs care, not prayers."
+        "That sound is not normal. Don't tell me it's always sounded like that.",
+        "Bring it by before a small problem becomes an expensive one.",
+        "A scooter needs maintenance, not prayers."
       ],
       "connections": [
         "NPC-13",
@@ -1298,9 +1298,9 @@
       "name": "ليلى the Young Mother",
       "story": "ليلى is a young mother who lives near the bakery and takes her toddler on a daily loop of the neighborhood. She walks slowly with a small stroller, stopping whenever her child points at a cat, a cart, or a passing bus. She is headed to meet her sister at the café terrace before collecting groceries. She is known for turning errands into little lessons about colors, greetings, and patience. منى and هبة keep a chair ready for her, and عم حنفي always has a small piece of bread for the toddler. Her child waves at عم مسعد every morning, which is the closest thing the street has to an official parade.",
       "topics": [
-        "We are exploring, not getting lost.",
-        "Say صباح الخير; everyone here is your friend.",
-        "One more minute, then we go — promise."
+        "We're exploring, not getting lost.",
+        "Say hello. Everyone on this street is a familiar face.",
+        "One more minute, then we go. I promise."
       ],
       "connections": [
         "NPC-11",
@@ -1328,8 +1328,8 @@
       "story": "مروان is a freelance photographer who documents old Cairo streets and the small details most people walk past. He carries a camera across his chest and walks slowly, waiting for light to fall across shop signs and balconies. He is headed toward the bench to photograph the plane tree before the afternoon shade moves. He is known for asking permission before taking portraits and for sending printed copies to the people he photographs. سلمى shares sketching spots with him, and عم ناصر tells him which corners have changed over the years. He is building a photo archive of Haret El-Nakheel so the neighborhood can remember itself as it grows.",
       "topics": [
         "The best picture is usually the one you didn't plan.",
-        "May I take a photo? I'll bring you a print.",
-        "This light won't last; neither will this old sign."
+        "May I take a photo? I'll bring you a printed copy.",
+        "This light won't last, and neither will that old sign."
       ],
       "connections": [
         "NPC-08",
@@ -1358,7 +1358,7 @@
       "topics": [
         "A letter gives you time to think before you answer.",
         "I know this street by its doorbells.",
-        "People move, but their stories leave addresses."
+        "People move away, but their stories leave addresses."
       ],
       "connections": [
         "NPC-07",
@@ -1385,9 +1385,9 @@
       "name": "نورهان and زياد, the Phone-Checking Couple",
       "story": "نورهان and زياد are newly married and live in the building above the old grocery shop. They walk side by side sharing one phone, usually comparing restaurant reviews or looking for a place they have already passed. They are headed to meet friends but keep stopping to check whether the map agrees with them. They are known for finishing each other's sentences and disagreeing about directions while following the same blue dot. عم ناصر has rescued them from wrong turns more than once, and يوسف helped them fix their map app. They are slowly learning that the best route through the neighborhood is often the one with the most familiar faces.",
       "topics": [
-        "The map says left; the street says otherwise.",
-        "Wait, I saved the place — no, you saved the other place.",
-        "We're not lost; we're exploring together."
+        "The map says left, but the street seems to disagree.",
+        "Wait, I saved the place. No, you saved the other one.",
+        "We're not lost. We're discovering a new route together."
       ],
       "connections": [
         "NPC-08",
@@ -1415,8 +1415,8 @@
       "story": "مروى and دينا have been friends since secondary school and now work in different offices on the same avenue. They walk together after work, carrying takeaway coffee and exchanging stories at a pace that blocks the entire pavement. They are headed to the women-friendly café when they want to sit longer than the walk allows. They are known for laughing before the punchline and for remembering every embarrassing story about each other. منى and هبة know their usual table, while بسمة occasionally recommends a book they both promise to read. Their friendship is the reason the café terrace stays lively even on quiet weekdays.",
       "topics": [
         "We were just about to tell you the story.",
-        "No, that's not how it happened; I have receipts.",
-        "Coffee first, decisions after."
+        "That's not how it happened. I have the messages to prove it.",
+        "Coffee first. Big decisions can wait."
       ],
       "connections": [
         "NPC-11",
@@ -1444,8 +1444,8 @@
       "story": "زياد and فارس grew up in neighboring buildings and have played football together since they were small enough to use a plastic bottle as a goal. They walk with a ball between them, arguing about last night's match and whose turn it is to bring water. They are headed to the court behind the bakery for evening practice. They are known for competitive banter, spectacular celebrations, and forgetting the score whenever they lose. عمرو coaches them, عم رجب sells them corn, and كريم sometimes joins for a quick match between deliveries. Their biggest rivalry is with the boys from the next lane, although they always share the ball when the game ends.",
       "topics": [
         "That was a foul, even if nobody saw it.",
-        "Today we're winning by at least three.",
-        "Bring the ball; I'll bring the excuses."
+        "Today we're winning by at least three goals.",
+        "Bring the ball. I'll bring the excuses."
       ],
       "connections": [
         "NPC-30",
@@ -1472,9 +1472,9 @@
       "name": "أمينة and جنى, Mother and Daughter",
       "story": "أمينة and her daughter جنى live above the pharmacy and make a daily afternoon trip for groceries and fresh air. They walk together with جنى holding the shopping list and adding one item every time they pass a sweet shop. They are headed to the fruit cart before visiting أمينة's sister at the café. They are known for playful bargaining, matching scarves, and جنى's talent for spotting the best mangoes. الحاجة سعاد lets جنى choose the fruit, and فاطمة sometimes saves them a pastry for the walk home. أمينة encourages her daughter to know the shopkeepers by name so the street feels like a community rather than a route.",
       "topics": [
-        "The list is not a wish list, ya Janna.",
+        "The shopping list is not a wish list.",
         "Choose the mango, but choose only one.",
-        "We know everyone here; that's the best part."
+        "We know everyone here. That's the best part of living on this street."
       ],
       "connections": [
         "NPC-04",
@@ -1502,8 +1502,8 @@
       "story": "عم جابر and عم فؤاد are lifelong friends who disagree about football, politics, and the correct way to brew tea. They walk slowly shoulder to shoulder, stopping whenever a familiar face gives them a new subject. They are headed to قهوة النخيل for their daily seat and a newspaper they will barely read. They are known for loud debates that end in shared snacks and a promise to continue tomorrow. They are regulars at the backgammon table, and عم صبري has learned to serve their tea before either man asks. Their friendship is the street's longest-running proof that disagreement does not have to become distance.",
       "topics": [
         "I agree with you, except for everything you just said.",
-        "We settled this in 1998; you simply forgot.",
-        "Come, tea is getting cold and your argument is getting old."
+        "We settled this argument years ago. You simply forgot.",
+        "Come on, the tea is getting cold and your argument is getting old."
       ],
       "connections": [
         "NPC-07",
@@ -1530,9 +1530,9 @@
       "name": "محمود the Construction Worker",
       "story": "محمود works with a small renovation crew repairing balconies and shopfronts around the neighborhood. He walks with a wooden plank balanced carefully on his shoulder and checks that pedestrians have room to pass. He is headed to a building entrance where his crew is replacing a damaged awning. He is known for helping carry heavy groceries and for apologizing whenever the plank gets in someone's way. عم حنفي gives him bread for the crew, and عم مسعد keeps the path clear around the work area. He hopes to save enough to bring his younger brother into the trade as an apprentice.",
       "topics": [
-        "Mind the plank, ya جماعة; I'm almost through.",
-        "We fix the street one balcony at a time.",
-        "Bread for the crew? That's better than overtime."
+        "Mind the plank, everyone. I'm almost through.",
+        "We repair the street one balcony at a time.",
+        "Fresh bread for the crew? That's better than overtime."
       ],
       "connections": [
         "NPC-05",
@@ -1559,9 +1559,9 @@
       "name": "فارس the Football Juggler",
       "story": "فارس is the teenager who can keep a football in the air longer than anyone on the block. He walks while juggling the ball, stopping only when a passing car or stern shopkeeper forces him to. He is headed to the court to meet زياد and the other players before sunset. He is known for showing off, rescuing the ball from impossible places, and pretending every trick was accidental. عمرو tries to turn his tricks into proper training, while أمين has warned him more than once near the junction. He secretly practices new moves beside عم رجب's corn cart because the tree gives him a good audience.",
       "topics": [
-        "Watch this one; I just learned it.",
-        "It didn't hit the sign; the sign moved.",
-        "Coach says control, I say style."
+        "Watch this trick. I just learned it yesterday.",
+        "The ball didn't hit the sign. The sign was in the wrong place.",
+        "Coach says control. I say style."
       ],
       "connections": [
         "NPC-30",
@@ -1588,9 +1588,9 @@
       "name": "سارة in the Abaya",
       "story": "سارة works at a nearby travel agency and is the person relatives call when a booking confirmation disappears. She walks with her phone in hand, checking voice notes from her mother while collecting household errands. She is headed to باسم's fruit stand before visiting her aunt at the women-friendly café. She is known for solving everyone's travel problems and for sending voice notes that begin with 'quick question' and last four minutes. منى and هبة keep a charger ready for her, and باسم prepares her mother's regular fruit order. She is planning a family trip but has not yet convinced her cousins to agree on one destination.",
       "topics": [
-        "I sent the ticket; check the other WhatsApp.",
+        "I sent the ticket. Check the other message thread.",
         "One quick question, then I promise I'm done.",
-        "No, the airport is not five minutes away."
+        "No, the airport is definitely not five minutes away."
       ],
       "connections": [
         "NPC-11",
@@ -1617,9 +1617,9 @@
       "name": "دانيال the Visitor",
       "story": "دانيال is a visiting architecture student staying with a cousin near the main avenue. He walks with a folded paper map because he likes comparing old street layouts with what still stands today. He is headed toward the old market but keeps getting distracted by balconies, signs, and friendly shopkeepers. He is known for asking thoughtful questions, pronouncing street names carefully, and buying more fruit than he can carry. عم ناصر helps him navigate, يوسف explains the neighborhood's changing buildings, and الحاجة سعاد has become his unofficial fruit guide. He plans to send his cousin a hand-drawn map of the street with every place where someone helped him marked on it.",
       "topics": [
-        "Excuse me, is this the old lane or the new old lane?",
-        "I am learning the names; please correct me.",
-        "This map is less useful than the people here."
+        "Excuse me, is this the old lane or the newer old lane?",
+        "I'm learning the street names. Please correct my pronunciation.",
+        "This map is less useful than the people who live here."
       ],
       "connections": [
         "NPC-08",
@@ -1646,9 +1646,9 @@
       "name": "حسن the Walking Officer",
       "story": "حسن is a neighborhood police officer who walks the residential stretch rather than sitting at the junction. He checks shop shutters, greets doormen, and makes sure the school route stays clear during busy hours. He is headed toward the old apartment buildings to follow up on a lost-property report. He is known for being approachable, remembering children's names, and taking football complaints far too seriously. أمين is his cousin and traffic counterpart, while سعيد the doorman often passes him useful building updates. He prefers solving small problems with a conversation before they become big problems with paperwork.",
       "topics": [
-        "Everything alright here, ya جماعة?",
-        "I heard there was a missing ball; that's serious business.",
-        "Keep the pavement clear and we'll all get home faster."
+        "Everything alright here? Let me know if you need a hand.",
+        "I heard there was a missing football. That's serious business.",
+        "Keep the pavement clear and everyone gets home safely."
       ],
       "connections": [
         "NPC-12",
