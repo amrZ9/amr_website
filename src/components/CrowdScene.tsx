@@ -35,11 +35,18 @@ const WORLD_BY_SPRITE = new Map<string, WorldNpcMeta>(
   (neighborhoodWorld.npcs as WorldNpcMeta[]).map((n) => [n.spriteId, n])
 );
 
-/** 3 clear visual depth lanes so back walkers are never hidden behind front walkers */
+const HERO_FRAME_COUNT = 47;
+const HERO_FPS = 12;
+const HERO_FRAMES = Array.from(
+  { length: HERO_FRAME_COUNT },
+  (_, i) => `/footer/hero/frame-${String(i + 1).padStart(2, "0")}.webp`
+);
+
+/** 3 clear visual depth lanes softened slightly so Amr (100% crisp ink) owns the spotlight */
 const LANES = [
-  { id: 0, z: 0.15, groundRatio: 0.63, heightRatio: 0.24, speedMult: 0.72, alpha: 0.76 }, // Far back
-  { id: 1, z: 0.50, groundRatio: 0.80, heightRatio: 0.34, speedMult: 0.92, alpha: 0.90 }, // Midground
-  { id: 2, z: 0.85, groundRatio: 0.96, heightRatio: 0.44, speedMult: 1.08, alpha: 1.00 }, // Foreground
+  { id: 0, z: 0.15, groundRatio: 0.63, heightRatio: 0.24, speedMult: 0.72, alpha: 0.48 }, // Far back
+  { id: 1, z: 0.50, groundRatio: 0.80, heightRatio: 0.34, speedMult: 0.92, alpha: 0.62 }, // Midground
+  { id: 2, z: 0.85, groundRatio: 0.96, heightRatio: 0.44, speedMult: 1.08, alpha: 0.74 }, // Foreground
 ] as const;
 
 interface LiveWalker {
@@ -80,16 +87,34 @@ interface CrowdSceneProps {
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 
 export function CrowdScene({ descId }: CrowdSceneProps) {
-  const [paused, setPaused] = useState(false);
   const [ready, setReady] = useState(false);
   const sceneRef = useRef<HTMLButtonElement>(null);
   const backCanvasRef = useRef<HTMLCanvasElement>(null);
   const frontCanvasRef = useRef<HTMLCanvasElement>(null);
-  const pausedRef = useRef(paused);
+  const heroTimeRef = useRef<number>(-1); // -1 = waiting to enter viewport
+  const heroImgsRef = useRef<HTMLImageElement[]>([]);
 
+  // Trigger Amr's walk-in entrance when footer scrolls into view
   useEffect(() => {
-    pausedRef.current = paused;
-  }, [paused]);
+    const scene = sceneRef.current;
+    if (!scene) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      heroTimeRef.current = HERO_FRAME_COUNT / HERO_FPS;
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting) && heroTimeRef.current < 0) {
+          heroTimeRef.current = 0;
+          io.disconnect();
+        }
+      },
+      { threshold: 0.25 }
+    );
+    io.observe(scene);
+    return () => io.disconnect();
+  }, []);
 
   useEffect(() => {
     const scene = sceneRef.current;
@@ -128,7 +153,12 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
     const walkerPool = STREET_NPCS.filter((n) => n.behavior !== "ambient");
     const ambientPool = STREET_NPCS.filter((n) => n.behavior === "ambient");
 
-    // Preload first batch
+    // Preload hero entrance frames + first batch of street NPCs
+    heroImgsRef.current = HERO_FRAMES.map((src) => {
+      const img = new Image();
+      img.src = src;
+      return img;
+    });
     walkerPool.slice(0, 10).forEach(getFrames);
     ambientPool.slice(0, 4).forEach(getFrames);
 
@@ -287,24 +317,21 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         // 1. Update rotating ambient slots (1s enter, 10s hold, 1s exit toward edge)
         const HOLD_TOTAL = 12.0;
         ambientSlots.forEach((slot) => {
-          if (!pausedRef.current) {
-            slot.timer += dt;
-            slot.phase += dt * 2.4;
-            if (slot.timer >= HOLD_TOTAL) {
-              const nextDef = nextAmbientDef();
-              slot.def = nextDef;
-              slot.imgs = getFrames(nextDef);
-              slot.timer = 0;
-              slot.phase = 0;
-              slot.flip = Boolean(nextDef.defaultFlip);
-            }
+          slot.timer += dt;
+          slot.phase += dt * 2.4;
+          if (slot.timer >= HOLD_TOTAL) {
+            const nextDef = nextAmbientDef();
+            slot.def = nextDef;
+            slot.imgs = getFrames(nextDef);
+            slot.timer = 0;
+            slot.phase = 0;
+            slot.flip = Boolean(nextDef.defaultFlip);
           }
         });
 
         // 2. Update walkers (smooth constant stride + Lane-1 ambient clear-zone rule)
         for (let i = 0; i < walkers.length; i++) {
           const wk = walkers[i];
-          if (pausedRef.current) continue;
 
           if (wk.reactionTimer > 0) {
             wk.reactionTimer -= dt;
@@ -368,7 +395,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         }
 
         // 3. Same-lane encounter rules (max 2 chats, never behind Amr)
-        if (!pausedRef.current) {
+        {
           const activeChatters = walkers.filter((n) => n.state === "chatting").length;
           for (let i = 0; i < walkers.length; i++) {
             const a = walkers[i];
@@ -520,6 +547,46 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         // Foreground lane (Lane 2) on frontCanvas
         walkers.filter((wk) => wk.lane === 2).forEach((wk) => drawWalker(fCtx, wk));
 
+        // 4b. Draw Amr's Flow Hero Entrance (100% crisp ink spotlight, center stage!)
+        if (heroTimeRef.current >= 0) {
+          heroTimeRef.current += dt;
+        }
+        const heroDuration = HERO_FRAME_COUNT / HERO_FPS;
+        const heroFrameIdx =
+          heroTimeRef.current < 0
+            ? 0
+            : Math.min(
+                HERO_FRAME_COUNT - 1,
+                Math.floor(heroTimeRef.current * HERO_FPS)
+              );
+        const heroImg = heroImgsRef.current[heroFrameIdx];
+        if (heroImg && heroImg.complete && heroImg.naturalWidth) {
+          const targetH = Math.min(h * 0.94, 410);
+          const targetW = (heroImg.naturalWidth / heroImg.naturalHeight) * targetH;
+          fCtx.save();
+          fCtx.globalAlpha = 1;
+          fCtx.drawImage(
+            heroImg,
+            w * 0.5 - targetW * 0.5,
+            h - targetH,
+            targetW,
+            targetH
+          );
+          fCtx.restore();
+
+          // Synced hero speech bubble during open-hand gesture (1.8s -> 3.5s)
+          if (heroTimeRef.current >= 1.8 && heroTimeRef.current <= Math.min(heroDuration, 3.6)) {
+            drawSpeechBubble(
+              fCtx,
+              w * 0.5,
+              h - targetH + 26,
+              now / 1000,
+              "Hey — this is the world I build for.",
+              w
+            );
+          }
+        }
+
         // 5. Speech bubbles on front layer (max 2, never overlapping)
         const drawnPairs = new Set<string>();
         const bubbleXs: number[] = [];
@@ -564,12 +631,11 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         ref={sceneRef}
         type="button"
         className="footer-crowd-scene"
-        aria-label={`${profile.footer.crowdName} ${
-          paused ? "Resume" : "Pause"
-        } crowd animation`}
+        aria-label={`${profile.footer.crowdName} Replay hero entrance`}
         aria-describedby={descId}
-        aria-pressed={paused}
-        onClick={() => setPaused((p) => !p)}
+        onClick={() => {
+          heroTimeRef.current = 0;
+        }}
         data-ready={String(ready)}
       >
         <span className="footer-crowd-name" aria-hidden="true">
@@ -579,14 +645,6 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           ref={backCanvasRef}
           className="footer-crowd-layer footer-crowd-back"
           aria-hidden="true"
-        />
-        <img
-          className="footer-crowd-portrait"
-          src={profile.footer.crowdPortrait}
-          alt=""
-          width={332}
-          height={975}
-          loading="eager"
         />
         <canvas
           ref={frontCanvasRef}
