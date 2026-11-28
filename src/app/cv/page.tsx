@@ -244,25 +244,6 @@ function buildWordHtml(): string {
 }
 
 export default function CvPage() {
-  const handleDownloadPdf = () => {
-    window.print();
-  };
-
-  const handleDownloadWord = () => {
-    const html = buildWordHtml();
-    const blob = new Blob(["\ufeff", html], {
-      type: "application/msword;charset=utf-8",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "Amr-Ahmed-CV.doc";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
   return (
     <main className="cv-page">
       <style>{`
@@ -507,22 +488,22 @@ export default function CvPage() {
         </Link>
 
         <div className="cv-downloads">
-          <button
-            type="button"
-            onClick={handleDownloadPdf}
+          <a
+            href="/cv/Amr-Ahmed-CV.pdf"
+            download="Amr-Ahmed-CV.pdf"
             className="cv-btn cv-btn-primary"
           >
             <Download size={15} />
             Download PDF
-          </button>
-          <button
-            type="button"
-            onClick={handleDownloadWord}
+          </a>
+          <a
+            href="/cv/Amr-Ahmed-CV.docx"
+            download="Amr-Ahmed-CV.docx"
             className="cv-btn"
           >
             <FileText size={15} />
-            Download Word (.doc)
-          </button>
+            Download Word (.docx)
+          </a>
         </div>
       </div>
 
