@@ -737,18 +737,23 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         const renderHeroImg = lastValidHeroImgRef.current;
 
         if (renderHeroImg && renderHeroImg.complete && renderHeroImg.naturalWidth) {
-          const targetH = Math.min(h * 0.92, 410);
+          const isClip2 = tHero >= clip1Dur;
+          // Exact pixel alignment between Clip 1 end (bbox 138,45,301,522) & Clip 2 start (147,32,311,517)
+          const alignScale = isClip2 ? 477 / 485 : 1;
+          const targetH = Math.min(h * 0.92, 410) * alignScale;
           const targetW =
             (renderHeroImg.naturalWidth / renderHeroImg.naturalHeight) * targetH;
           const heroBottomOffset = 6;
-          const heroCenterX = w * heroCenterXRatio;
+          const alignDx = isClip2 ? (-9.5 / 450) * targetW : 0;
+          const alignDy = isClip2 ? (7 / 540) * targetH : 0;
+          const heroCenterX = w * heroCenterXRatio + alignDx;
 
           fCtx.save();
           fCtx.globalAlpha = 1;
           fCtx.drawImage(
             renderHeroImg,
             heroCenterX - targetW * 0.5,
-            h - targetH - heroBottomOffset,
+            h - targetH - heroBottomOffset + alignDy,
             targetW,
             targetH
           );
