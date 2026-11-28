@@ -712,9 +712,9 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           // 3-step Hero Intro synced frame-accurately to wave (5.0s), open hand (6.8s), & welcome (8.6s)
           const bubbleX = w * 0.5 - targetW * 0.36;
           const bubbleY = h - targetH - heroBottomOffset + 62;
-          if (heroTimeRef.current >= 5.0 && heroTimeRef.current < 6.8) {
+          if (heroTimeRef.current >= 5.4 && heroTimeRef.current < 7.0) {
             drawSpeechBubble(fCtx, bubbleX, bubbleY, now / 1000, "Hi...", w, "cloud", "right");
-          } else if (heroTimeRef.current >= 6.8 && heroTimeRef.current < 8.6) {
+          } else if (heroTimeRef.current >= 7.0 && heroTimeRef.current < 8.8) {
             drawSpeechBubble(
               fCtx,
               bubbleX,
@@ -725,7 +725,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
               "cloud",
               "right"
             );
-          } else if (heroTimeRef.current >= 8.6 && heroTimeRef.current <= heroDuration + 1.8) {
+          } else if (heroTimeRef.current >= 8.8 && heroTimeRef.current <= heroDuration + 2.0) {
             drawSpeechBubble(
               fCtx,
               bubbleX,
