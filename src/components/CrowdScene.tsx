@@ -36,31 +36,10 @@ const WORLD_BY_SPRITE = new Map<string, WorldNpcMeta>(
 );
 
 const HERO_FRAME_COUNT = 105;
-const HERO_FPS = 10; // Clip 1: Full-body walk-in, wave, gesture & settle (~10.5s)
+const HERO_FPS = 10; // Full-body walk-in, wave, gesture & settle (~10.5s)
 const HERO_FRAMES = Array.from(
   { length: HERO_FRAME_COUNT },
   (_, i) => `/footer/hero/frame-${String(i + 1).padStart(3, "0")}.webp`
-);
-
-const HERO2_FRAME_COUNT = 149;
-const HERO2_FPS = 10; // Clip 2: Walk Center -> Right Side & gesture with both hands (~14.9s)
-const HERO2_FRAMES = Array.from(
-  { length: HERO2_FRAME_COUNT },
-  (_, i) => `/footer/hero2/frame-${String(i + 1).padStart(3, "0")}.webp`
-);
-
-const HERO3_FRAME_COUNT = 149;
-const HERO3_FPS = 10; // Clip 3: Walk Right Side -> Left Side & gesture with both hands (~14.9s)
-const HERO3_FRAMES = Array.from(
-  { length: HERO3_FRAME_COUNT },
-  (_, i) => `/footer/hero3/frame-${String(i + 1).padStart(3, "0")}.webp`
-);
-
-const HERO4_FRAME_COUNT = 149;
-const HERO4_FPS = 10; // Clip 4: Walk Left Side -> Center, wave goodbye & hands in pockets (~14.9s)
-const HERO4_FRAMES = Array.from(
-  { length: HERO4_FRAME_COUNT },
-  (_, i) => `/footer/hero4/frame-${String(i + 1).padStart(3, "0")}.webp`
 );
 
 /** 3 clear visual depth lanes — rich and legible while Amr (100% crisp ink) owns center stage */
@@ -116,9 +95,6 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
   const frontCanvasRef = useRef<HTMLCanvasElement>(null);
   const heroTimeRef = useRef<number>(-1); // -1 = waiting to enter viewport
   const heroImgsRef = useRef<HTMLImageElement[]>([]);
-  const hero2ImgsRef = useRef<HTMLImageElement[]>([]);
-  const hero3ImgsRef = useRef<HTMLImageElement[]>([]);
-  const hero4ImgsRef = useRef<HTMLImageElement[]>([]);
   const lastValidHeroImgRef = useRef<HTMLImageElement | null>(null);
   const fullBodyImgRef = useRef<HTMLImageElement | null>(null);
 
@@ -181,23 +157,8 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
     const walkerPool = STREET_NPCS.filter((n) => n.behavior !== "ambient");
     const ambientPool = STREET_NPCS.filter((n) => n.behavior === "ambient");
 
-    // Preload Clip 1 + Clip 2 hero frames + first batch of street NPCs
+    // Preload hero entrance frames + first batch of street NPCs
     heroImgsRef.current = HERO_FRAMES.map((src) => {
-      const img = new Image();
-      img.src = src;
-      return img;
-    });
-    hero2ImgsRef.current = HERO2_FRAMES.map((src) => {
-      const img = new Image();
-      img.src = src;
-      return img;
-    });
-    hero3ImgsRef.current = HERO3_FRAMES.map((src) => {
-      const img = new Image();
-      img.src = src;
-      return img;
-    });
-    hero4ImgsRef.current = HERO4_FRAMES.map((src) => {
       const img = new Image();
       img.src = src;
       return img;
@@ -711,188 +672,50 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         walkers.filter((wk) => wk.lane === 1).forEach((wk) => drawWalker(bCtx, wk));
         walkers.filter((wk) => wk.lane === 2).forEach((wk) => drawWalker(bCtx, wk));
 
-        // 4b. Draw Amr's 4-Act Stage Presentation: Clip 1 (Center) -> Clip 2 (Right) -> Clip 3 (Left) -> Clip 4 (Back to Center & Goodbye)
+        // 4b. Draw Amr's Clean Center Hero Entrance (Clip 1 only)
         if (heroTimeRef.current >= 0) {
           heroTimeRef.current += dt;
         }
         const clip1Dur = HERO_FRAME_COUNT / HERO_FPS; // 10.5s
-        const clip2Dur = HERO2_FRAME_COUNT / HERO2_FPS; // 14.9s
-        const clip3Dur = HERO3_FRAME_COUNT / HERO3_FPS; // 14.9s
         const tHero = heroTimeRef.current;
 
-        let heroImg: HTMLImageElement | undefined;
-        let heroCenterXRatio = 0.5;
-        let clipNum: 1 | 2 | 3 | 4 = 1;
+        const idx1 =
+          tHero < 0
+            ? 0
+            : Math.min(HERO_FRAME_COUNT - 1, Math.floor(tHero * HERO_FPS));
+        const heroImg = heroImgsRef.current[idx1];
 
-        if (tHero < 0) {
-          heroImg = heroImgsRef.current[0];
-          heroCenterXRatio = 0.5;
-          clipNum = 1;
-        } else if (tHero < clip1Dur) {
-          const idx1 = Math.min(HERO_FRAME_COUNT - 1, Math.floor(tHero * HERO_FPS));
-          heroImg = heroImgsRef.current[idx1];
-          heroCenterXRatio = 0.5;
-          clipNum = 1;
-        } else if (tHero < clip1Dur + clip2Dur) {
-          const t2 = tHero - clip1Dur;
-          const idx2 = Math.min(HERO2_FRAME_COUNT - 1, Math.floor(t2 * HERO2_FPS));
-          heroImg = hero2ImgsRef.current[idx2];
-          const walkProgress = Math.max(0, Math.min(1, (t2 - 1.4) / 4.0));
-          const easeWalk =
-            walkProgress < 0.5
-              ? 2 * walkProgress * walkProgress
-              : 1 - Math.pow(-2 * walkProgress + 2, 2) / 2;
-          heroCenterXRatio = 0.5 + easeWalk * 0.22; // 50% -> 72%
-          clipNum = 2;
-        } else if (tHero < clip1Dur + clip2Dur + clip3Dur) {
-          const t3 = tHero - clip1Dur - clip2Dur;
-          const idx3 = Math.min(HERO3_FRAME_COUNT - 1, Math.floor(t3 * HERO3_FPS));
-          heroImg = hero3ImgsRef.current[idx3];
-          const walkProgress = Math.max(0, Math.min(1, (t3 - 1.0) / 3.0));
-          const easeWalk =
-            walkProgress < 0.5
-              ? 2 * walkProgress * walkProgress
-              : 1 - Math.pow(-2 * walkProgress + 2, 2) / 2;
-          heroCenterXRatio = 0.72 - easeWalk * 0.44; // 72% -> 28%
-          clipNum = 3;
-        } else {
-          const t4 = tHero - clip1Dur - clip2Dur - clip3Dur;
-          const idx4 = Math.min(HERO4_FRAME_COUNT - 1, Math.floor(t4 * HERO4_FPS));
-          heroImg = hero4ImgsRef.current[idx4];
-          const walkProgress = Math.max(0, Math.min(1, (t4 - 1.0) / 3.2));
-          const easeWalk =
-            walkProgress < 0.5
-              ? 2 * walkProgress * walkProgress
-              : 1 - Math.pow(-2 * walkProgress + 2, 2) / 2;
-          heroCenterXRatio = 0.28 + easeWalk * 0.22; // 28% -> 50% (back to center!)
-          clipNum = 4;
-        }
-
-        // Fallback to last decoded frame so a slow-loading frame NEVER causes a 1-frame blink
         if (heroImg && heroImg.complete && heroImg.naturalWidth) {
           lastValidHeroImgRef.current = heroImg;
         }
         const renderHeroImg = lastValidHeroImgRef.current;
 
         if (renderHeroImg && renderHeroImg.complete && renderHeroImg.naturalWidth) {
-          const H1 = Math.min(h * 0.92, 410);
-          const W1 = (renderHeroImg.naturalWidth / renderHeroImg.naturalHeight) * H1;
-          const y1 = h - H1 - 6;
-          const heroCenterX = w * heroCenterXRatio;
-
-          // Exact 0.000px head-to-shoe alignment across all 4 clips
-          const clipMeta =
-            clipNum === 1
-              ? { scale: 1, top: 45, cx: 219.5, refTop: 45, refCx: 219.5 }
-              : clipNum === 2
-                ? { scale: 477 / 485, top: 32, cx: 229, refTop: 45, refCx: 219.5 }
-                : clipNum === 3
-                  ? {
-                      scale: (477 / 485) * (490 / 504),
-                      top: 18,
-                      cx: 228.5,
-                      refTop: 45 + (34 - 32) * (477 / 485),
-                      refCx: 219.5 + (234.5 - 229) * (477 / 485),
-                    }
-                  : { scale: 477 / 479, top: 41, cx: 220.5, refTop: 45, refCx: 219.5 };
-
-          const targetH = H1 * clipMeta.scale;
-          const targetW = W1 * clipMeta.scale;
-          const drawX =
-            heroCenterX -
-            W1 * 0.5 +
-            (clipMeta.refCx / 450) * W1 -
-            (clipMeta.cx / 450) * targetW;
-          const drawY = y1 + (clipMeta.refTop * H1 - clipMeta.top * targetH) / 540;
+          const targetH = Math.min(h * 0.92, 410);
+          const targetW =
+            (renderHeroImg.naturalWidth / renderHeroImg.naturalHeight) * targetH;
+          const drawX = w * 0.5 - targetW * 0.5;
+          const drawY = h - targetH - 6;
 
           fCtx.save();
           fCtx.globalAlpha = 1;
           fCtx.drawImage(renderHeroImg, drawX, drawY, targetW, targetH);
           fCtx.restore();
 
-          const bubbleXLeft = heroCenterX - W1 * 0.36;
-          const bubbleXRight = heroCenterX + W1 * 0.38;
-          const bubbleY = y1 + 62;
+          const bubbleX = w * 0.5 - targetW * 0.36;
+          const bubbleY = drawY + 62;
 
-          // Clip 1 Clouds (Center Intro)
           if (tHero >= 5.4 && tHero < 7.0) {
-            drawSpeechBubble(fCtx, bubbleXLeft, bubbleY, now / 1000, "Hi...", w, "cloud", "right");
+            drawSpeechBubble(fCtx, bubbleX, bubbleY, now / 1000, "Hi...", w, "cloud", "right");
           } else if (tHero >= 7.0 && tHero < 8.8) {
-            drawSpeechBubble(fCtx, bubbleXLeft, bubbleY, now / 1000, "This is me, Amr.", w, "cloud", "right");
-          } else if (tHero >= 8.8 && tHero < clip1Dur + 0.6) {
+            drawSpeechBubble(fCtx, bubbleX, bubbleY, now / 1000, "This is me, Amr.", w, "cloud", "right");
+          } else if (tHero >= 8.8 && tHero <= clip1Dur + 2.0) {
             drawSpeechBubble(
               fCtx,
-              bubbleXLeft,
+              bubbleX,
               bubbleY,
               now / 1000,
               "Welcome to my side\nof the internet.",
-              w,
-              "cloud",
-              "right"
-            );
-          }
-
-          // Clip 2 Clouds (Right Side — both-hands storytelling)
-          const t2 = tHero - clip1Dur;
-          if (t2 >= 6.0 && t2 < 9.5) {
-            drawSpeechBubble(
-              fCtx,
-              bubbleXLeft,
-              bubbleY,
-              now / 1000,
-              "Most sites just list\nwhat you've done.",
-              w,
-              "cloud",
-              "right"
-            );
-          } else if (t2 >= 9.5 && t2 < clip2Dur - 0.5) {
-            drawSpeechBubble(
-              fCtx,
-              bubbleXLeft,
-              bubbleY,
-              now / 1000,
-              "I wanted to show\nthe world I build for.",
-              w,
-              "cloud",
-              "right"
-            );
-          }
-
-          // Clip 3 Clouds (Left Side — clouds open into center space on right of face)
-          const t3 = tHero - clip1Dur - clip2Dur;
-          if (t3 >= 6.4 && t3 < 10.0) {
-            drawSpeechBubble(
-              fCtx,
-              bubbleXRight,
-              bubbleY,
-              now / 1000,
-              "Every detail here\nstarts with real people.",
-              w,
-              "cloud",
-              "left"
-            );
-          } else if (t3 >= 10.0 && t3 < clip3Dur - 0.5) {
-            drawSpeechBubble(
-              fCtx,
-              bubbleXRight,
-              bubbleY,
-              now / 1000,
-              "Understand what they need.\nBuild what they'll use.",
-              w,
-              "cloud",
-              "left"
-            );
-          }
-
-          // Clip 4 Cloud (Back at Center — goodbye wave!)
-          const t4 = tHero - clip1Dur - clip2Dur - clip3Dur;
-          if (t4 >= 4.8 && t4 <= 9.6) {
-            drawSpeechBubble(
-              fCtx,
-              bubbleXLeft,
-              bubbleY,
-              now / 1000,
-              "See you around.",
               w,
               "cloud",
               "right"
