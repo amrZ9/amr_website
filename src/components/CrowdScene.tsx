@@ -93,6 +93,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
   const frontCanvasRef = useRef<HTMLCanvasElement>(null);
   const heroTimeRef = useRef<number>(-1); // -1 = waiting to enter viewport
   const heroImgsRef = useRef<HTMLImageElement[]>([]);
+  const fullBodyImgRef = useRef<HTMLImageElement | null>(null);
 
   // Trigger Amr's walk-in entrance when footer scrolls into view
   useEffect(() => {
@@ -153,12 +154,15 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
     const walkerPool = STREET_NPCS.filter((n) => n.behavior !== "ambient");
     const ambientPool = STREET_NPCS.filter((n) => n.behavior === "ambient");
 
-    // Preload hero entrance frames + first batch of street NPCs
+    // Preload hero entrance frames + full-body standing portrait + first batch of street NPCs
     heroImgsRef.current = HERO_FRAMES.map((src) => {
       const img = new Image();
       img.src = src;
       return img;
     });
+    const fullImg = new Image();
+    fullImg.src = profile.footer.crowdPortrait;
+    fullBodyImgRef.current = fullImg;
     walkerPool.slice(0, 10).forEach(getFrames);
     ambientPool.slice(0, 4).forEach(getFrames);
 
@@ -264,36 +268,83 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       cy: number,
       t: number,
       text: string | null,
-      maxWidth: number
+      maxWidth: number,
+      style: "cloud" | "box" = "cloud"
     ) => {
+      if (!text) return;
       ctx.save();
       const floatY = cy - Math.sin(t * 2.5) * 2;
-      if (text) {
-        ctx.font = "600 11px 'Space Grotesk', system-ui, sans-serif";
-        const shortText = text.length > 52 ? text.slice(0, 49).trim() + "…" : text;
-        const padX = 10;
-        const metrics = ctx.measureText(shortText);
-        const bw = Math.min(maxWidth - 20, metrics.width + padX * 2);
-        const bh = 24;
-        const clampedX = Math.max(bw / 2 + 8, Math.min(maxWidth - bw / 2 - 8, cx));
+      ctx.font = "600 11px 'Space Grotesk', system-ui, sans-serif";
+      const shortText = text.length > 52 ? text.slice(0, 49).trim() + "…" : text;
+      const padX = style === "cloud" ? 16 : 12;
+      const metrics = ctx.measureText(shortText);
+      const bw = Math.min(maxWidth - 24, metrics.width + padX * 2);
+      const bh = style === "cloud" ? 28 : 26;
+      const clampedX = Math.max(bw / 2 + 12, Math.min(maxWidth - bw / 2 - 12, cx));
 
-        ctx.translate(clampedX, floatY);
-        // Subtle comic ink offset shadow
+      ctx.translate(clampedX, floatY);
+
+      if (style === "cloud") {
+        // Fluffy comic cloud silhouette made of overlapping scalloped puffs
+        const rx = bw / 2;
+        const ry = bh / 2;
+        const puffs: [number, number, number][] = [
+          [-rx + 10, 0, 11],
+          [rx - 10, 0, 11],
+          [-rx * 0.55, -ry + 2, 11],
+          [0, -ry, 13],
+          [rx * 0.55, -ry + 2, 11],
+          [-rx * 0.5, ry - 2, 10],
+          [0, ry - 1, 11],
+          [rx * 0.5, ry - 2, 10],
+        ];
+
+        // Outer black ink outline
+        ctx.fillStyle = "#141414";
+        puffs.forEach(([px, py, r]) => {
+          ctx.beginPath();
+          ctx.arc(px, py, r + 1.8, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.fillRect(-rx + 10, -ry - 1.5, bw - 20, bh + 3);
+
+        // Inner crisp white cloud fill
+        ctx.fillStyle = "#ffffff";
+        puffs.forEach(([px, py, r]) => {
+          ctx.beginPath();
+          ctx.arc(px, py, r, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.fillRect(-rx + 10, -ry, bw - 20, bh);
+
+        // Two little comic thought/cloud trailing circles below
+        [
+          [0, ry + 11, 3.6],
+          [-3, ry + 18, 2.2],
+        ].forEach(([tx, ty, tr]) => {
+          ctx.fillStyle = "#ffffff";
+          ctx.strokeStyle = "#141414";
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.arc(tx, ty, tr, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        });
+      } else {
+        // Crisp comic box with ink shadow & pointer tail
         ctx.fillStyle = "#141414";
         ctx.beginPath();
-        ctx.roundRect(-bw / 2 + 2, -bh / 2 + 2, bw, bh, 11);
+        ctx.roundRect(-bw / 2 + 2, -bh / 2 + 2, bw, bh, 8);
         ctx.fill();
 
-        // Main comic bubble body
         ctx.fillStyle = "#ffffff";
         ctx.strokeStyle = "#141414";
         ctx.lineWidth = 1.6;
         ctx.beginPath();
-        ctx.roundRect(-bw / 2, -bh / 2, bw, bh, 11);
+        ctx.roundRect(-bw / 2, -bh / 2, bw, bh, 8);
         ctx.fill();
         ctx.stroke();
 
-        // Comic pointer tail pointing down to speaker
         ctx.beginPath();
         ctx.moveTo(-5, bh / 2 - 1);
         ctx.lineTo(0, bh / 2 + 7);
@@ -306,12 +357,12 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         ctx.lineTo(0, bh / 2 + 7);
         ctx.lineTo(6, bh / 2);
         ctx.stroke();
-
-        ctx.fillStyle = "#141414";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(shortText, 0, 0.5, bw - padX * 1.5);
       }
+
+      ctx.fillStyle = "#141414";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(shortText, 0, 0.5, bw - padX * 1.4);
       ctx.restore();
     };
 
@@ -581,14 +632,22 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
                 Math.floor(heroTimeRef.current * HERO_FPS)
               );
         const heroImg = heroImgsRef.current[heroFrameIdx];
-        if (heroImg && heroImg.complete && heroImg.naturalWidth) {
-          const targetH = Math.min(h * 0.88, 390);
-          const targetW = (heroImg.naturalWidth / heroImg.naturalHeight) * targetH;
-          const heroBottomOffset = 14; // Lift slightly so sneakers stay fully visible
+        const fullImg = fullBodyImgRef.current;
+        const settledOnFullBody = heroTimeRef.current >= heroDuration;
+        const activeHeroImg =
+          settledOnFullBody && fullImg && fullImg.complete && fullImg.naturalWidth
+            ? fullImg
+            : heroImg;
+
+        if (activeHeroImg && activeHeroImg.complete && activeHeroImg.naturalWidth) {
+          const targetH = Math.min(h * 0.88, 385);
+          const targetW =
+            (activeHeroImg.naturalWidth / activeHeroImg.naturalHeight) * targetH;
+          const heroBottomOffset = 10;
           fCtx.save();
           fCtx.globalAlpha = 1;
           fCtx.drawImage(
-            heroImg,
+            activeHeroImg,
             w * 0.5 - targetW * 0.5,
             h - targetH - heroBottomOffset,
             targetW,
@@ -596,15 +655,19 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           );
           fCtx.restore();
 
-          // Synced comic speech bubble during open-hand gesture (2.6s -> 5.3s at 8 FPS)
-          if (heroTimeRef.current >= 2.6 && heroTimeRef.current <= Math.min(heroDuration, 5.4)) {
+          // 2-step Hero Intro: "Hi..." in a comic box -> "This is me, Amr." in a comic cloud!
+          const bubbleY = h - targetH - heroBottomOffset + 12;
+          if (heroTimeRef.current >= 2.1 && heroTimeRef.current < 3.6) {
+            drawSpeechBubble(fCtx, w * 0.5, bubbleY, now / 1000, "Hi...", w, "box");
+          } else if (heroTimeRef.current >= 3.6 && heroTimeRef.current <= heroDuration + 2.2) {
             drawSpeechBubble(
               fCtx,
               w * 0.5,
-              h - targetH - heroBottomOffset + 18,
+              bubbleY,
               now / 1000,
-              "Hey — this is the world I build for.",
-              w
+              "This is me, Amr.",
+              w,
+              "cloud"
             );
           }
         }
