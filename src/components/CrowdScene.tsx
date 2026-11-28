@@ -741,7 +741,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
             walkProgress < 0.5
               ? 2 * walkProgress * walkProgress
               : 1 - Math.pow(-2 * walkProgress + 2, 2) / 2;
-          heroCenterXRatio = 0.72 - easeWalk * 0.34; // 72% -> 38%
+          heroCenterXRatio = 0.72 - easeWalk * 0.44; // 72% -> 28% (symmetric with right side)
           clipNum = 3;
         }
 
