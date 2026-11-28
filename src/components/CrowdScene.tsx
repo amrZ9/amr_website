@@ -49,6 +49,13 @@ const HERO2_FRAMES = Array.from(
   (_, i) => `/footer/hero2/frame-${String(i + 1).padStart(3, "0")}.webp`
 );
 
+const HERO3_FRAME_COUNT = 149;
+const HERO3_FPS = 10; // Clip 3: Walk Right Side -> Left Side & gesture with both hands (~14.9s)
+const HERO3_FRAMES = Array.from(
+  { length: HERO3_FRAME_COUNT },
+  (_, i) => `/footer/hero3/frame-${String(i + 1).padStart(3, "0")}.webp`
+);
+
 /** 3 clear visual depth lanes — rich and legible while Amr (100% crisp ink) owns center stage */
 const LANES = [
   { id: 0, z: 0.15, groundRatio: 0.63, heightRatio: 0.24, speedMult: 0.72, alpha: 0.68 }, // Far back
@@ -103,6 +110,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
   const heroTimeRef = useRef<number>(-1); // -1 = waiting to enter viewport
   const heroImgsRef = useRef<HTMLImageElement[]>([]);
   const hero2ImgsRef = useRef<HTMLImageElement[]>([]);
+  const hero3ImgsRef = useRef<HTMLImageElement[]>([]);
   const lastValidHeroImgRef = useRef<HTMLImageElement | null>(null);
   const fullBodyImgRef = useRef<HTMLImageElement | null>(null);
 
@@ -172,6 +180,11 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       return img;
     });
     hero2ImgsRef.current = HERO2_FRAMES.map((src) => {
+      const img = new Image();
+      img.src = src;
+      return img;
+    });
+    hero3ImgsRef.current = HERO3_FRAMES.map((src) => {
       const img = new Image();
       img.src = src;
       return img;
@@ -699,35 +712,50 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         // Foreground lane (Lane 2) on frontCanvas
         walkers.filter((wk) => wk.lane === 2).forEach((wk) => drawWalker(fCtx, wk));
 
-        // 4b. Draw Amr's Chained Hero Presentation: Clip 1 (Center Intro) -> Clip 2 (Walk Right & Present)
+        // 4b. Draw Amr's Chained Hero Presentation: Clip 1 (Center) -> Clip 2 (Right) -> Clip 3 (Left)
         if (heroTimeRef.current >= 0) {
           heroTimeRef.current += dt;
         }
         const clip1Dur = HERO_FRAME_COUNT / HERO_FPS; // 10.5s
         const clip2Dur = HERO2_FRAME_COUNT / HERO2_FPS; // 14.9s
+        const clip3Dur = HERO3_FRAME_COUNT / HERO3_FPS; // 14.9s
         const tHero = heroTimeRef.current;
 
         let heroImg: HTMLImageElement | undefined;
         let heroCenterXRatio = 0.5;
+        let clipNum: 1 | 2 | 3 = 1;
 
         if (tHero < 0) {
           heroImg = heroImgsRef.current[0];
           heroCenterXRatio = 0.5;
+          clipNum = 1;
         } else if (tHero < clip1Dur) {
           const idx1 = Math.min(HERO_FRAME_COUNT - 1, Math.floor(tHero * HERO_FPS));
           heroImg = heroImgsRef.current[idx1];
           heroCenterXRatio = 0.5;
-        } else {
+          clipNum = 1;
+        } else if (tHero < clip1Dur + clip2Dur) {
           const t2 = tHero - clip1Dur;
           const idx2 = Math.min(HERO2_FRAME_COUNT - 1, Math.floor(t2 * HERO2_FPS));
           heroImg = hero2ImgsRef.current[idx2];
-          // Smoothly walk further right across the stage (50% -> 72%) synced to Clip 2's footsteps (1.4s -> 5.4s)
           const walkProgress = Math.max(0, Math.min(1, (t2 - 1.4) / 4.0));
           const easeWalk =
             walkProgress < 0.5
               ? 2 * walkProgress * walkProgress
               : 1 - Math.pow(-2 * walkProgress + 2, 2) / 2;
-          heroCenterXRatio = 0.5 + easeWalk * 0.22;
+          heroCenterXRatio = 0.5 + easeWalk * 0.22; // 50% -> 72%
+          clipNum = 2;
+        } else {
+          const t3 = tHero - clip1Dur - clip2Dur;
+          const idx3 = Math.min(HERO3_FRAME_COUNT - 1, Math.floor(t3 * HERO3_FPS));
+          heroImg = hero3ImgsRef.current[idx3];
+          const walkProgress = Math.max(0, Math.min(1, (t3 - 1.4) / 4.6));
+          const easeWalk =
+            walkProgress < 0.5
+              ? 2 * walkProgress * walkProgress
+              : 1 - Math.pow(-2 * walkProgress + 2, 2) / 2;
+          heroCenterXRatio = 0.72 - easeWalk * 0.44; // 72% -> 28%
+          clipNum = 3;
         }
 
         // Fallback to last decoded frame so a slow-loading frame NEVER causes a 1-frame blink
@@ -737,19 +765,19 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         const renderHeroImg = lastValidHeroImgRef.current;
 
         if (renderHeroImg && renderHeroImg.complete && renderHeroImg.naturalWidth) {
-          const isClip2 = tHero >= clip1Dur;
+          const isAlignedClip = clipNum === 2 || clipNum === 3;
           const H1 = Math.min(h * 0.92, 410);
           const W1 = (renderHeroImg.naturalWidth / renderHeroImg.naturalHeight) * H1;
           const y1 = h - H1 - 6;
           const heroCenterX = w * heroCenterXRatio;
 
           // Exact 0.000px match on head top (45 vs 32), shoe bottom (522 vs 517), & centerX (219.5 vs 229)
-          const targetH = isClip2 ? H1 * (477 / 485) : H1;
-          const targetW = isClip2 ? W1 * (477 / 485) : W1;
-          const drawX = isClip2
+          const targetH = isAlignedClip ? H1 * (477 / 485) : H1;
+          const targetW = isAlignedClip ? W1 * (477 / 485) : W1;
+          const drawX = isAlignedClip
             ? heroCenterX - W1 * 0.5 + (219.5 / 450) * W1 - (229 / 450) * targetW
             : heroCenterX - W1 * 0.5;
-          const drawY = isClip2
+          const drawY = isAlignedClip
             ? y1 + (45 * H1 - 32 * targetH) / 540
             : y1;
 
@@ -758,18 +786,19 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           fCtx.drawImage(renderHeroImg, drawX, drawY, targetW, targetH);
           fCtx.restore();
 
-          const bubbleX = heroCenterX - W1 * 0.36;
+          const bubbleXLeft = heroCenterX - W1 * 0.36;
+          const bubbleXRight = heroCenterX + W1 * 0.38;
           const bubbleY = y1 + 62;
 
           // Clip 1 Clouds (Center Intro)
           if (tHero >= 5.4 && tHero < 7.0) {
-            drawSpeechBubble(fCtx, bubbleX, bubbleY, now / 1000, "Hi...", w, "cloud", "right");
+            drawSpeechBubble(fCtx, bubbleXLeft, bubbleY, now / 1000, "Hi...", w, "cloud", "right");
           } else if (tHero >= 7.0 && tHero < 8.8) {
-            drawSpeechBubble(fCtx, bubbleX, bubbleY, now / 1000, "This is me, Amr.", w, "cloud", "right");
+            drawSpeechBubble(fCtx, bubbleXLeft, bubbleY, now / 1000, "This is me, Amr.", w, "cloud", "right");
           } else if (tHero >= 8.8 && tHero < clip1Dur + 0.6) {
             drawSpeechBubble(
               fCtx,
-              bubbleX,
+              bubbleXLeft,
               bubbleY,
               now / 1000,
               "Welcome to my side\nof the internet.",
@@ -779,12 +808,12 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
             );
           }
 
-          // Clip 2 Clouds (Right Side — both-hands storytelling, easy to edit later!)
+          // Clip 2 Clouds (Right Side — both-hands storytelling)
           const t2 = tHero - clip1Dur;
           if (t2 >= 6.0 && t2 < 9.5) {
             drawSpeechBubble(
               fCtx,
-              bubbleX,
+              bubbleXLeft,
               bubbleY,
               now / 1000,
               "Most sites just list\nwhat you've done.",
@@ -792,16 +821,42 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
               "cloud",
               "right"
             );
-          } else if (t2 >= 9.5 && t2 <= clip2Dur + 1.5) {
+          } else if (t2 >= 9.5 && t2 < clip2Dur - 0.5) {
             drawSpeechBubble(
               fCtx,
-              bubbleX,
+              bubbleXLeft,
               bubbleY,
               now / 1000,
               "I wanted to show\nthe world I build for.",
               w,
               "cloud",
               "right"
+            );
+          }
+
+          // Clip 3 Clouds (Left Side — clouds open into center space on right of face)
+          const t3 = tHero - clip1Dur - clip2Dur;
+          if (t3 >= 6.4 && t3 < 10.0) {
+            drawSpeechBubble(
+              fCtx,
+              bubbleXRight,
+              bubbleY,
+              now / 1000,
+              "Every detail here\nstarts with real people.",
+              w,
+              "cloud",
+              "left"
+            );
+          } else if (t3 >= 10.0 && t3 <= clip3Dur + 2.0) {
+            drawSpeechBubble(
+              fCtx,
+              bubbleXRight,
+              bubbleY,
+              now / 1000,
+              "Understand what they need.\nBuild what they'll use.",
+              w,
+              "cloud",
+              "left"
             );
           }
         }
