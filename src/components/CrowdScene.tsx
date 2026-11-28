@@ -287,103 +287,127 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       if (!text) return;
       ctx.save();
       const floatY = cy - Math.sin(t * 2.5) * 2;
-      ctx.font = "600 11px 'Space Grotesk', system-ui, sans-serif";
-      const shortText = text.length > 52 ? text.slice(0, 49).trim() + "…" : text;
-      const padX = style === "cloud" ? 16 : 12;
-      const metrics = ctx.measureText(shortText);
-      const bw = Math.min(maxWidth - 24, metrics.width + padX * 2);
-      const bh = style === "cloud" ? 28 : 26;
-      const clampedX = Math.max(bw / 2 + 12, Math.min(maxWidth - bw / 2 - 12, cx));
+      ctx.font = "700 11px 'Space Grotesk', system-ui, sans-serif";
 
-      ctx.translate(clampedX, floatY);
+      // Word-wrap into 2-3 compact comic lines so bubbles are plump, not skinny bars
+      const words = text.split(/\s+/);
+      const lines: string[] = [];
+      let current = "";
+      const maxLinePx = 138;
+      for (const word of words) {
+        const test = current ? `${current} ${word}` : word;
+        if (ctx.measureText(test).width > maxLinePx && current) {
+          lines.push(current);
+          current = word;
+          if (lines.length === 2) break;
+        } else {
+          current = test;
+        }
+      }
+      if (current && lines.length < 3) lines.push(current);
+      if (lines.length === 3 && words.join(" ").length > lines.join(" ").length + 3) {
+        lines[2] = lines[2].replace(/[.,;!?]*$/, "") + "…";
+      }
+
+      const lineH = 14;
+      const textW = Math.max(...lines.map((l) => ctx.measureText(l).width), 42);
+      const textH = lines.length * lineH;
+      const padX = style === "cloud" ? 22 : 16;
+      const padY = style === "cloud" ? 16 : 12;
+      const bw = Math.min(maxWidth - 28, textW + padX * 2);
+      const bh = textH + padY * 2;
+      const clampedX = Math.max(bw / 2 + 16, Math.min(maxWidth - bw / 2 - 16, cx));
+
+      ctx.translate(clampedX, floatY - bh * 0.25);
 
       if (style === "cloud") {
-        // True organic comic cloud perimeter built from scalloped lobes around an ellipse (zero boxy edges!)
-        const rx = bw / 2 + 6;
-        const ry = bh / 2 + 5;
-        const lobes = Math.max(10, Math.round((rx * 2) / 18) * 2);
-        const buildCloudPath = (scale = 1) => {
+        // Plump hand-drawn comic cloud (matches reference top-right cloud with curved tail!)
+        const rx = bw / 2;
+        const ry = bh / 2;
+        const lobes = 10;
+        const buildCloud = () => {
           ctx.beginPath();
           for (let i = 0; i < lobes; i++) {
             const a0 = (i / lobes) * Math.PI * 2;
             const a1 = ((i + 1) / lobes) * Math.PI * 2;
             const am = (a0 + a1) * 0.5;
-            const x0 = Math.cos(a0) * rx * scale;
-            const y0 = Math.sin(a0) * ry * scale;
-            const x1 = Math.cos(a1) * rx * scale;
-            const y1 = Math.sin(a1) * ry * scale;
-            // Control point bulges outward for authentic fluffy cloud lobes
-            const bulge = 1.24 + (i % 2 === 0 ? 0.06 : -0.02);
-            const cxp = Math.cos(am) * rx * bulge * scale;
-            const cyp = Math.sin(am) * ry * bulge * scale;
+            const x0 = Math.cos(a0) * rx;
+            const y0 = Math.sin(a0) * ry;
+            const x1 = Math.cos(a1) * rx;
+            const y1 = Math.sin(a1) * ry;
+            const bulge = 1.26 + (i % 2 === 0 ? 0.08 : -0.02);
+            const cxp = Math.cos(am) * rx * bulge;
+            const cyp = Math.sin(am) * ry * bulge;
             if (i === 0) ctx.moveTo(x0, y0);
             ctx.quadraticCurveTo(cxp, cyp, x1, y1);
           }
           ctx.closePath();
         };
 
-        // Subtle ink shadow
+        // Bold comic ink drop-shadow
         ctx.save();
-        ctx.translate(1.5, 2);
-        buildCloudPath(1);
-        ctx.fillStyle = "rgba(20,20,20,0.16)";
+        ctx.translate(3, 3.5);
+        buildCloud();
+        ctx.fillStyle = "rgba(20,20,20,0.22)";
         ctx.fill();
         ctx.restore();
 
-        // Crisp white cloud + ink outline
-        buildCloudPath(1);
+        // Crisp white cloud + bold 2.1px black comic outline
+        buildCloud();
         ctx.fillStyle = "#ffffff";
         ctx.fill();
         ctx.strokeStyle = "#141414";
-        ctx.lineWidth = 1.6;
+        ctx.lineWidth = 2.1;
         ctx.stroke();
 
-        // Comic cloud trailing bubbles
-        [
-          [-4, ry + 9, 3.8],
-          [-9, ry + 16, 2.3],
-        ].forEach(([tx, ty, tr]) => {
-          ctx.fillStyle = "#ffffff";
-          ctx.strokeStyle = "#141414";
-          ctx.lineWidth = 1.4;
-          ctx.beginPath();
-          ctx.arc(tx, ty, tr, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
-        });
-      } else {
-        // Crisp comic box with ink shadow & pointer tail
-        ctx.fillStyle = "#141414";
+        // Curved comic pointer tail at bottom
         ctx.beginPath();
-        ctx.roundRect(-bw / 2 + 2, -bh / 2 + 2, bw, bh, 8);
+        ctx.moveTo(-6, ry - 1);
+        ctx.quadraticCurveTo(-8, ry + 11, -15, ry + 13);
+        ctx.quadraticCurveTo(-2, ry + 11, 5, ry - 1);
+        ctx.closePath();
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-6, ry);
+        ctx.quadraticCurveTo(-8, ry + 11, -15, ry + 13);
+        ctx.quadraticCurveTo(-2, ry + 11, 5, ry);
+        ctx.strokeStyle = "#141414";
+        ctx.lineWidth = 2.0;
+        ctx.stroke();
+      } else {
+        // Bold comic oval/box with curved tail
+        ctx.fillStyle = "rgba(20,20,20,0.22)";
+        ctx.beginPath();
+        ctx.roundRect(-bw / 2 + 3, -bh / 2 + 3.5, bw, bh, 12);
         ctx.fill();
 
         ctx.fillStyle = "#ffffff";
         ctx.strokeStyle = "#141414";
-        ctx.lineWidth = 1.6;
+        ctx.lineWidth = 2.1;
         ctx.beginPath();
-        ctx.roundRect(-bw / 2, -bh / 2, bw, bh, 8);
+        ctx.roundRect(-bw / 2, -bh / 2, bw, bh, 12);
         ctx.fill();
         ctx.stroke();
 
         ctx.beginPath();
         ctx.moveTo(-5, bh / 2 - 1);
-        ctx.lineTo(0, bh / 2 + 7);
-        ctx.lineTo(6, bh / 2 - 1);
+        ctx.quadraticCurveTo(-7, bh / 2 + 10, -13, bh / 2 + 12);
+        ctx.quadraticCurveTo(-1, bh / 2 + 10, 5, bh / 2 - 1);
         ctx.closePath();
         ctx.fillStyle = "#ffffff";
         ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(-5, bh / 2);
-        ctx.lineTo(0, bh / 2 + 7);
-        ctx.lineTo(6, bh / 2);
         ctx.stroke();
       }
 
+      // Draw centered multi-line comic text
       ctx.fillStyle = "#141414";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(shortText, 0, 0.5, bw - padX * 1.4);
+      const startY = -((lines.length - 1) * lineH) / 2;
+      lines.forEach((line, idx) => {
+        ctx.fillText(line, 0, startY + idx * lineH);
+      });
       ctx.restore();
     };
 
