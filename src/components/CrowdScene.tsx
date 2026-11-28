@@ -765,21 +765,25 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         const renderHeroImg = lastValidHeroImgRef.current;
 
         if (renderHeroImg && renderHeroImg.complete && renderHeroImg.naturalWidth) {
-          const isAlignedClip = clipNum === 2 || clipNum === 3;
           const H1 = Math.min(h * 0.92, 410);
           const W1 = (renderHeroImg.naturalWidth / renderHeroImg.naturalHeight) * H1;
           const y1 = h - H1 - 6;
           const heroCenterX = w * heroCenterXRatio;
 
-          // Exact 0.000px match on head top (45 vs 32), shoe bottom (522 vs 517), & centerX (219.5 vs 229)
-          const targetH = isAlignedClip ? H1 * (477 / 485) : H1;
-          const targetW = isAlignedClip ? W1 * (477 / 485) : W1;
-          const drawX = isAlignedClip
-            ? heroCenterX - W1 * 0.5 + (219.5 / 450) * W1 - (229 / 450) * targetW
-            : heroCenterX - W1 * 0.5;
-          const drawY = isAlignedClip
-            ? y1 + (45 * H1 - 32 * targetH) / 540
-            : y1;
+          // Exact 0.000px head-to-shoe alignment across all 3 clips:
+          // Clip 1: top=45, h=477, cx=219.5 | Clip 2: top=32, h=485, cx=229 | Clip 3: top=18, h=504, cx=228.5
+          const clipMeta =
+            clipNum === 1
+              ? { scale: 1, top: 45, cx: 219.5 }
+              : clipNum === 2
+                ? { scale: 477 / 485, top: 32, cx: 229 }
+                : { scale: 477 / 504, top: 18, cx: 228.5 };
+
+          const targetH = H1 * clipMeta.scale;
+          const targetW = W1 * clipMeta.scale;
+          const drawX =
+            heroCenterX - W1 * 0.5 + (219.5 / 450) * W1 - (clipMeta.cx / 450) * targetW;
+          const drawY = y1 + (45 * H1 - clipMeta.top * targetH) / 540;
 
           fCtx.save();
           fCtx.globalAlpha = 1;
