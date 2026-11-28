@@ -709,12 +709,12 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           );
           fCtx.restore();
 
-          // 3-step Hero Intro positioned on the left side of Amr's face with tail pointing right toward him
+          // 3-step Hero Intro synced frame-accurately to wave (5.0s), open hand (6.8s), & welcome (8.6s)
           const bubbleX = w * 0.5 - targetW * 0.36;
           const bubbleY = h - targetH - heroBottomOffset + 62;
-          if (heroTimeRef.current >= 4.0 && heroTimeRef.current < 5.8) {
+          if (heroTimeRef.current >= 5.0 && heroTimeRef.current < 6.8) {
             drawSpeechBubble(fCtx, bubbleX, bubbleY, now / 1000, "Hi...", w, "cloud", "right");
-          } else if (heroTimeRef.current >= 5.8 && heroTimeRef.current < 8.0) {
+          } else if (heroTimeRef.current >= 6.8 && heroTimeRef.current < 8.6) {
             drawSpeechBubble(
               fCtx,
               bubbleX,
@@ -725,13 +725,13 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
               "cloud",
               "right"
             );
-          } else if (heroTimeRef.current >= 8.0 && heroTimeRef.current <= heroDuration + 1.5) {
+          } else if (heroTimeRef.current >= 8.6 && heroTimeRef.current <= heroDuration + 1.8) {
             drawSpeechBubble(
               fCtx,
               bubbleX,
               bubbleY,
               now / 1000,
-              "Welcome.",
+              "Welcome to my side of the internet.",
               w,
               "cloud",
               "right"
