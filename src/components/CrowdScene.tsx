@@ -290,24 +290,28 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       const floatY = cy - Math.sin(t * 2.5) * 2;
       ctx.font = "700 11px 'Space Grotesk', system-ui, sans-serif";
 
-      // Word-wrap into 2-3 compact comic lines so bubbles are plump, not skinny bars
-      const words = text.split(/\s+/);
+      // Support explicit \n line breaks or auto-wrap into 2-3 compact comic lines
       const lines: string[] = [];
-      let current = "";
       const maxLinePx = 138;
-      for (const word of words) {
-        const test = current ? `${current} ${word}` : word;
-        if (ctx.measureText(test).width > maxLinePx && current) {
-          lines.push(current);
-          current = word;
-          if (lines.length === 2) break;
-        } else {
-          current = test;
+      if (text.includes("\n")) {
+        lines.push(...text.split("\n").slice(0, 3));
+      } else {
+        const words = text.split(/\s+/);
+        let current = "";
+        for (const word of words) {
+          const test = current ? `${current} ${word}` : word;
+          if (ctx.measureText(test).width > maxLinePx && current) {
+            lines.push(current);
+            current = word;
+            if (lines.length === 2) break;
+          } else {
+            current = test;
+          }
         }
-      }
-      if (current && lines.length < 3) lines.push(current);
-      if (lines.length === 3 && words.join(" ").length > lines.join(" ").length + 3) {
-        lines[2] = lines[2].replace(/[.,;!?]*$/, "") + "…";
+        if (current && lines.length < 3) lines.push(current);
+        if (lines.length === 3 && words.join(" ").length > lines.join(" ").length + 3) {
+          lines[2] = lines[2].replace(/[.,;!?]*$/, "") + "…";
+        }
       }
 
       const lineH = 14;
@@ -731,7 +735,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
               bubbleX,
               bubbleY,
               now / 1000,
-              "Welcome to my side of the internet.",
+              "Welcome to my side\nof the internet.",
               w,
               "cloud",
               "right"
