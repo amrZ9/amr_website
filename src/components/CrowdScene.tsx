@@ -56,6 +56,13 @@ const HERO3_FRAMES = Array.from(
   (_, i) => `/footer/hero3/frame-${String(i + 1).padStart(3, "0")}.webp`
 );
 
+const HERO4_FRAME_COUNT = 149;
+const HERO4_FPS = 10; // Clip 4: Walk Left Side -> Center, wave goodbye & hands in pockets (~14.9s)
+const HERO4_FRAMES = Array.from(
+  { length: HERO4_FRAME_COUNT },
+  (_, i) => `/footer/hero4/frame-${String(i + 1).padStart(3, "0")}.webp`
+);
+
 /** 3 clear visual depth lanes — rich and legible while Amr (100% crisp ink) owns center stage */
 const LANES = [
   { id: 0, z: 0.15, groundRatio: 0.63, heightRatio: 0.24, speedMult: 0.72, alpha: 0.68 }, // Far back
@@ -111,6 +118,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
   const heroImgsRef = useRef<HTMLImageElement[]>([]);
   const hero2ImgsRef = useRef<HTMLImageElement[]>([]);
   const hero3ImgsRef = useRef<HTMLImageElement[]>([]);
+  const hero4ImgsRef = useRef<HTMLImageElement[]>([]);
   const lastValidHeroImgRef = useRef<HTMLImageElement | null>(null);
   const fullBodyImgRef = useRef<HTMLImageElement | null>(null);
 
@@ -185,6 +193,11 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       return img;
     });
     hero3ImgsRef.current = HERO3_FRAMES.map((src) => {
+      const img = new Image();
+      img.src = src;
+      return img;
+    });
+    hero4ImgsRef.current = HERO4_FRAMES.map((src) => {
       const img = new Image();
       img.src = src;
       return img;
@@ -698,7 +711,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         walkers.filter((wk) => wk.lane === 1).forEach((wk) => drawWalker(bCtx, wk));
         walkers.filter((wk) => wk.lane === 2).forEach((wk) => drawWalker(bCtx, wk));
 
-        // 4b. Draw Amr's Chained Hero Presentation: Clip 1 (Center) -> Clip 2 (Right) -> Clip 3 (Left)
+        // 4b. Draw Amr's 4-Act Stage Presentation: Clip 1 (Center) -> Clip 2 (Right) -> Clip 3 (Left) -> Clip 4 (Back to Center & Goodbye)
         if (heroTimeRef.current >= 0) {
           heroTimeRef.current += dt;
         }
@@ -709,7 +722,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
 
         let heroImg: HTMLImageElement | undefined;
         let heroCenterXRatio = 0.5;
-        let clipNum: 1 | 2 | 3 = 1;
+        let clipNum: 1 | 2 | 3 | 4 = 1;
 
         if (tHero < 0) {
           heroImg = heroImgsRef.current[0];
@@ -731,18 +744,28 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
               : 1 - Math.pow(-2 * walkProgress + 2, 2) / 2;
           heroCenterXRatio = 0.5 + easeWalk * 0.22; // 50% -> 72%
           clipNum = 2;
-        } else {
+        } else if (tHero < clip1Dur + clip2Dur + clip3Dur) {
           const t3 = tHero - clip1Dur - clip2Dur;
           const idx3 = Math.min(HERO3_FRAME_COUNT - 1, Math.floor(t3 * HERO3_FPS));
           heroImg = hero3ImgsRef.current[idx3];
-          // Slide ONLY while feet are stepping (1.0s -> 4.0s) so he never slides after stopping!
           const walkProgress = Math.max(0, Math.min(1, (t3 - 1.0) / 3.0));
           const easeWalk =
             walkProgress < 0.5
               ? 2 * walkProgress * walkProgress
               : 1 - Math.pow(-2 * walkProgress + 2, 2) / 2;
-          heroCenterXRatio = 0.72 - easeWalk * 0.44; // 72% -> 28% (symmetric with right side)
+          heroCenterXRatio = 0.72 - easeWalk * 0.44; // 72% -> 28%
           clipNum = 3;
+        } else {
+          const t4 = tHero - clip1Dur - clip2Dur - clip3Dur;
+          const idx4 = Math.min(HERO4_FRAME_COUNT - 1, Math.floor(t4 * HERO4_FPS));
+          heroImg = hero4ImgsRef.current[idx4];
+          const walkProgress = Math.max(0, Math.min(1, (t4 - 1.0) / 3.2));
+          const easeWalk =
+            walkProgress < 0.5
+              ? 2 * walkProgress * walkProgress
+              : 1 - Math.pow(-2 * walkProgress + 2, 2) / 2;
+          heroCenterXRatio = 0.28 + easeWalk * 0.22; // 28% -> 50% (back to center!)
+          clipNum = 4;
         }
 
         // Fallback to last decoded frame so a slow-loading frame NEVER causes a 1-frame blink
@@ -757,21 +780,21 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           const y1 = h - H1 - 6;
           const heroCenterX = w * heroCenterXRatio;
 
-          // Exact 0.000px head-to-shoe alignment across all 3 clips:
-          // Clip 1 end: top=45, h=477, cx=219.5 | Clip 2 start: top=32, h=485, cx=229 | Clip 2 end: top=34, h=490, cx=234.5
-          // Align Clip 3 start (top=18, h=504, cx=228.5) directly to Clip 2's rendered end frame!
+          // Exact 0.000px head-to-shoe alignment across all 4 clips
           const clipMeta =
             clipNum === 1
               ? { scale: 1, top: 45, cx: 219.5, refTop: 45, refCx: 219.5 }
               : clipNum === 2
                 ? { scale: 477 / 485, top: 32, cx: 229, refTop: 45, refCx: 219.5 }
-                : {
-                    scale: (477 / 485) * (490 / 504),
-                    top: 18,
-                    cx: 228.5,
-                    refTop: 45 + ((34 - 32) * (477 / 485)),
-                    refCx: 219.5 + ((234.5 - 229) * (477 / 485)),
-                  };
+                : clipNum === 3
+                  ? {
+                      scale: (477 / 485) * (490 / 504),
+                      top: 18,
+                      cx: 228.5,
+                      refTop: 45 + (34 - 32) * (477 / 485),
+                      refCx: 219.5 + (234.5 - 229) * (477 / 485),
+                    }
+                  : { scale: 477 / 479, top: 41, cx: 220.5, refTop: 45, refCx: 219.5 };
 
           const targetH = H1 * clipMeta.scale;
           const targetW = W1 * clipMeta.scale;
@@ -848,7 +871,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
               "cloud",
               "left"
             );
-          } else if (t3 >= 10.0 && t3 <= clip3Dur + 2.0) {
+          } else if (t3 >= 10.0 && t3 < clip3Dur - 0.5) {
             drawSpeechBubble(
               fCtx,
               bubbleXRight,
@@ -858,6 +881,21 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
               w,
               "cloud",
               "left"
+            );
+          }
+
+          // Clip 4 Cloud (Back at Center — goodbye wave!)
+          const t4 = tHero - clip1Dur - clip2Dur - clip3Dur;
+          if (t4 >= 4.8 && t4 <= 9.6) {
+            drawSpeechBubble(
+              fCtx,
+              bubbleXLeft,
+              bubbleY,
+              now / 1000,
+              "See you around.",
+              w,
+              "cloud",
+              "right"
             );
           }
         }
