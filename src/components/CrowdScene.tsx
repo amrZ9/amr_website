@@ -751,12 +751,13 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           const t3 = tHero - clip1Dur - clip2Dur;
           const idx3 = Math.min(HERO3_FRAME_COUNT - 1, Math.floor(t3 * HERO3_FPS));
           heroImg = hero3ImgsRef.current[idx3];
-          const walkProgress = Math.max(0, Math.min(1, (t3 - 1.4) / 4.6));
+          // Natural foot-synced walk speed from right (72%) -> left (36%) over 5.4s (no dragging!)
+          const walkProgress = Math.max(0, Math.min(1, (t3 - 1.2) / 5.4));
           const easeWalk =
             walkProgress < 0.5
               ? 2 * walkProgress * walkProgress
               : 1 - Math.pow(-2 * walkProgress + 2, 2) / 2;
-          heroCenterXRatio = 0.72 - easeWalk * 0.44; // 72% -> 28%
+          heroCenterXRatio = 0.72 - easeWalk * 0.36; // 72% -> 36%
           clipNum = 3;
         }
 
@@ -773,19 +774,29 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           const heroCenterX = w * heroCenterXRatio;
 
           // Exact 0.000px head-to-shoe alignment across all 3 clips:
-          // Clip 1: top=45, h=477, cx=219.5 | Clip 2: top=32, h=485, cx=229 | Clip 3: top=18, h=504, cx=228.5
+          // Clip 1 end: top=45, h=477, cx=219.5 | Clip 2 start: top=32, h=485, cx=229 | Clip 2 end: top=34, h=490, cx=234.5
+          // Align Clip 3 start (top=18, h=504, cx=228.5) directly to Clip 2's rendered end frame!
           const clipMeta =
             clipNum === 1
-              ? { scale: 1, top: 45, cx: 219.5 }
+              ? { scale: 1, top: 45, cx: 219.5, refTop: 45, refCx: 219.5 }
               : clipNum === 2
-                ? { scale: 477 / 485, top: 32, cx: 229 }
-                : { scale: 477 / 504, top: 18, cx: 228.5 };
+                ? { scale: 477 / 485, top: 32, cx: 229, refTop: 45, refCx: 219.5 }
+                : {
+                    scale: (477 / 485) * (490 / 504),
+                    top: 18,
+                    cx: 228.5,
+                    refTop: 45 + ((34 - 32) * (477 / 485)),
+                    refCx: 219.5 + ((234.5 - 229) * (477 / 485)),
+                  };
 
           const targetH = H1 * clipMeta.scale;
           const targetW = W1 * clipMeta.scale;
           const drawX =
-            heroCenterX - W1 * 0.5 + (219.5 / 450) * W1 - (clipMeta.cx / 450) * targetW;
-          const drawY = y1 + (45 * H1 - clipMeta.top * targetH) / 540;
+            heroCenterX -
+            W1 * 0.5 +
+            (clipMeta.refCx / 450) * W1 -
+            (clipMeta.cx / 450) * targetW;
+          const drawY = y1 + (clipMeta.refTop * H1 - clipMeta.top * targetH) / 540;
 
           fCtx.save();
           fCtx.globalAlpha = 1;
