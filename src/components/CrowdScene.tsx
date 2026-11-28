@@ -209,9 +209,9 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       };
     };
 
-    // 15 active walkers distributed cleanly across the 3 depth lanes:
-    // Lane 0 (far back): 5 walkers | Lane 1 (mid): 6 walkers | Lane 2 (front): 4 walkers
-    const laneAssignments: (0 | 1 | 2)[] = [0, 1, 2, 0, 1, 0, 2, 1, 0, 1, 2, 0, 1, 1, 2];
+    // 18 active walkers distributed cleanly across the 3 depth lanes:
+    // Lane 0 (far back): 6 walkers | Lane 1 (mid): 7 walkers | Lane 2 (front): 5 walkers
+    const laneAssignments: (0 | 1 | 2)[] = [0, 1, 2, 0, 1, 0, 2, 1, 0, 1, 2, 0, 1, 2, 0, 1, 1, 2];
     const walkers: LiveWalker[] = laneAssignments.map((lane, i) =>
       spawnWalkerInLane(lane, ((i + 0.5) / laneAssignments.length) * initialW)
     );
