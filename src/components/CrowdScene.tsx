@@ -348,7 +348,8 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
       const padY = style === "cloud" ? 16 : 12;
       const bw = Math.min(maxWidth - 28, textW + padX * 2);
       const bh = textH + padY * 2;
-      const clampedX = Math.max(bw / 2 + 16, Math.min(maxWidth - bw / 2 - 16, cx));
+      const clampedX = Math.max(bw * 0.68 + 14, Math.min(maxWidth - bw * 0.68 - 14, cx));
+      const isArabic = /[\u0600-\u06FF]/.test(text);
 
       ctx.translate(clampedX, floatY - bh * 0.25);
 
@@ -433,10 +434,11 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         ctx.stroke();
       }
 
-      // Draw centered multi-line comic text
+      // Draw centered multi-line comic text (native RTL for Arabic lines)
       ctx.fillStyle = "#141414";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
+      ctx.direction = isArabic ? "rtl" : "ltr";
       const startY = -((lines.length - 1) * lineH) / 2;
       lines.forEach((line, idx) => {
         ctx.fillText(line, 0, startY + idx * lineH);
