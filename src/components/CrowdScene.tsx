@@ -36,10 +36,17 @@ const WORLD_BY_SPRITE = new Map<string, WorldNpcMeta>(
 );
 
 const HERO_FRAME_COUNT = 105;
-const HERO_FPS = 10; // Full-body relaxed walk-in, wave, gesture & settle (~10.5s)
+const HERO_FPS = 10; // Clip 1: Full-body walk-in, wave, gesture & settle (~10.5s)
 const HERO_FRAMES = Array.from(
   { length: HERO_FRAME_COUNT },
   (_, i) => `/footer/hero/frame-${String(i + 1).padStart(3, "0")}.webp`
+);
+
+const HERO2_FRAME_COUNT = 149;
+const HERO2_FPS = 10; // Clip 2: Walk Center -> Right Side & gesture with both hands (~14.9s)
+const HERO2_FRAMES = Array.from(
+  { length: HERO2_FRAME_COUNT },
+  (_, i) => `/footer/hero2/frame-${String(i + 1).padStart(3, "0")}.webp`
 );
 
 /** 3 clear visual depth lanes — rich and legible while Amr (100% crisp ink) owns center stage */
@@ -95,6 +102,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
   const frontCanvasRef = useRef<HTMLCanvasElement>(null);
   const heroTimeRef = useRef<number>(-1); // -1 = waiting to enter viewport
   const heroImgsRef = useRef<HTMLImageElement[]>([]);
+  const hero2ImgsRef = useRef<HTMLImageElement[]>([]);
   const fullBodyImgRef = useRef<HTMLImageElement | null>(null);
 
   // Trigger Amr's walk-in entrance when footer scrolls into view
@@ -156,8 +164,13 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
     const walkerPool = STREET_NPCS.filter((n) => n.behavior !== "ambient");
     const ambientPool = STREET_NPCS.filter((n) => n.behavior === "ambient");
 
-    // Preload hero entrance frames + full-body standing portrait + first batch of street NPCs
+    // Preload Clip 1 + Clip 2 hero frames + first batch of street NPCs
     heroImgsRef.current = HERO_FRAMES.map((src) => {
+      const img = new Image();
+      img.src = src;
+      return img;
+    });
+    hero2ImgsRef.current = HERO2_FRAMES.map((src) => {
       const img = new Image();
       img.src = src;
       return img;
@@ -685,57 +698,95 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         // Foreground lane (Lane 2) on frontCanvas
         walkers.filter((wk) => wk.lane === 2).forEach((wk) => drawWalker(fCtx, wk));
 
-        // 4b. Draw Amr's Flow Hero Entrance (100% crisp ink spotlight, center stage!)
+        // 4b. Draw Amr's Chained Hero Presentation: Clip 1 (Center Intro) -> Clip 2 (Walk Right & Present)
         if (heroTimeRef.current >= 0) {
           heroTimeRef.current += dt;
         }
-        const heroDuration = HERO_FRAME_COUNT / HERO_FPS;
-        const heroFrameIdx =
-          heroTimeRef.current < 0
-            ? 0
-            : Math.min(
-                HERO_FRAME_COUNT - 1,
-                Math.floor(heroTimeRef.current * HERO_FPS)
-              );
-        const heroImg = heroImgsRef.current[heroFrameIdx];
+        const clip1Dur = HERO_FRAME_COUNT / HERO_FPS; // 10.5s
+        const clip2Dur = HERO2_FRAME_COUNT / HERO2_FPS; // 14.9s
+        const tHero = heroTimeRef.current;
+
+        let heroImg: HTMLImageElement | undefined;
+        let heroCenterXRatio = 0.5;
+
+        if (tHero < 0) {
+          heroImg = heroImgsRef.current[0];
+          heroCenterXRatio = 0.5;
+        } else if (tHero < clip1Dur) {
+          const idx1 = Math.min(HERO_FRAME_COUNT - 1, Math.floor(tHero * HERO_FPS));
+          heroImg = heroImgsRef.current[idx1];
+          heroCenterXRatio = 0.5;
+        } else {
+          const t2 = tHero - clip1Dur;
+          const idx2 = Math.min(HERO2_FRAME_COUNT - 1, Math.floor(t2 * HERO2_FPS));
+          heroImg = hero2ImgsRef.current[idx2];
+          // Smoothly walk further right across the stage (50% -> 72%) synced to Clip 2's footsteps (1.4s -> 5.4s)
+          const walkProgress = Math.max(0, Math.min(1, (t2 - 1.4) / 4.0));
+          const easeWalk =
+            walkProgress < 0.5
+              ? 2 * walkProgress * walkProgress
+              : 1 - Math.pow(-2 * walkProgress + 2, 2) / 2;
+          heroCenterXRatio = 0.5 + easeWalk * 0.22;
+        }
+
         if (heroImg && heroImg.complete && heroImg.naturalWidth) {
           const targetH = Math.min(h * 0.92, 410);
           const targetW = (heroImg.naturalWidth / heroImg.naturalHeight) * targetH;
           const heroBottomOffset = 6;
+          const heroCenterX = w * heroCenterXRatio;
+
           fCtx.save();
           fCtx.globalAlpha = 1;
           fCtx.drawImage(
             heroImg,
-            w * 0.5 - targetW * 0.5,
+            heroCenterX - targetW * 0.5,
             h - targetH - heroBottomOffset,
             targetW,
             targetH
           );
           fCtx.restore();
 
-          // 3-step Hero Intro synced frame-accurately to wave (5.0s), open hand (6.8s), & welcome (8.6s)
-          const bubbleX = w * 0.5 - targetW * 0.36;
+          const bubbleX = heroCenterX - targetW * 0.36;
           const bubbleY = h - targetH - heroBottomOffset + 62;
-          if (heroTimeRef.current >= 5.4 && heroTimeRef.current < 7.0) {
+
+          // Clip 1 Clouds (Center Intro)
+          if (tHero >= 5.4 && tHero < 7.0) {
             drawSpeechBubble(fCtx, bubbleX, bubbleY, now / 1000, "Hi...", w, "cloud", "right");
-          } else if (heroTimeRef.current >= 7.0 && heroTimeRef.current < 8.8) {
-            drawSpeechBubble(
-              fCtx,
-              bubbleX,
-              bubbleY,
-              now / 1000,
-              "This is me, Amr.",
-              w,
-              "cloud",
-              "right"
-            );
-          } else if (heroTimeRef.current >= 8.8 && heroTimeRef.current <= heroDuration + 2.0) {
+          } else if (tHero >= 7.0 && tHero < 8.8) {
+            drawSpeechBubble(fCtx, bubbleX, bubbleY, now / 1000, "This is me, Amr.", w, "cloud", "right");
+          } else if (tHero >= 8.8 && tHero < clip1Dur + 0.6) {
             drawSpeechBubble(
               fCtx,
               bubbleX,
               bubbleY,
               now / 1000,
               "Welcome to my side\nof the internet.",
+              w,
+              "cloud",
+              "right"
+            );
+          }
+
+          // Clip 2 Clouds (Right Side — both-hands storytelling, easy to edit later!)
+          const t2 = tHero - clip1Dur;
+          if (t2 >= 6.0 && t2 < 9.5) {
+            drawSpeechBubble(
+              fCtx,
+              bubbleX,
+              bubbleY,
+              now / 1000,
+              "Most sites just list\nwhat you've done.",
+              w,
+              "cloud",
+              "right"
+            );
+          } else if (t2 >= 9.5 && t2 <= clip2Dur + 1.5) {
+            drawSpeechBubble(
+              fCtx,
+              bubbleX,
+              bubbleY,
+              now / 1000,
+              "I wanted to show\nthe world I build for.",
               w,
               "cloud",
               "right"
