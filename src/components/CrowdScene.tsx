@@ -662,7 +662,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         // Far back lane (Lane 0)
         walkers.filter((wk) => wk.lane === 0).forEach((wk) => drawWalker(bCtx, wk));
 
-        // Ambient vignettes (10s hold + smooth slide/fade toward screen edge)
+        // Ambient vignettes (10s hold + smooth slide/fade toward screen edge — silent so Amr owns the dialogue)
         ambientSlots.forEach((slot) => {
           const laneCfg = LANES[slot.lane];
           const frameIdx = Math.floor(slot.phase) % Math.max(1, slot.imgs.length);
@@ -672,12 +672,10 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           let alpha = laneCfg.alpha;
           let slideOffset = 0;
           if (slot.timer < 1.0) {
-            // Entering from edge
             const t = slot.timer;
             alpha *= t;
             slideOffset = (1 - t) * (slot.side === "left" ? -50 : 50);
           } else if (slot.timer > 11.0) {
-            // Vanishing toward screen exit
             const t = Math.min(1, slot.timer - 11.0);
             alpha *= 1 - t;
             slideOffset = t * (slot.side === "left" ? -60 : 60);
@@ -694,25 +692,11 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           if (slot.flip) bCtx.scale(-1, 1);
           bCtx.drawImage(img, -targetW * 0.5, -targetH, targetW, targetH);
           bCtx.restore();
-          // Ambient vendor / character speaks out loud during their middle hold window (2.2s -> 7.8s)
-          if (slot.activeLine && slot.timer >= 2.2 && slot.timer <= 7.8) {
-            drawSpeechBubble(
-              fCtx,
-              x,
-              groundY - targetH - 22,
-              now / 1000,
-              slot.activeLine,
-              w,
-              "cloud"
-            );
-          }
         });
 
-        // Midground lane (Lane 1)
+        // Midground lane (Lane 1) & Lane 2 — ALL drawn behind Amr so the road in front of Amr stays 100% clear!
         walkers.filter((wk) => wk.lane === 1).forEach((wk) => drawWalker(bCtx, wk));
-
-        // Foreground lane (Lane 2) on frontCanvas
-        walkers.filter((wk) => wk.lane === 2).forEach((wk) => drawWalker(fCtx, wk));
+        walkers.filter((wk) => wk.lane === 2).forEach((wk) => drawWalker(bCtx, wk));
 
         // 4b. Draw Amr's Chained Hero Presentation: Clip 1 (Center) -> Clip 2 (Right) -> Clip 3 (Left)
         if (heroTimeRef.current >= 0) {
@@ -751,13 +735,13 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           const t3 = tHero - clip1Dur - clip2Dur;
           const idx3 = Math.min(HERO3_FRAME_COUNT - 1, Math.floor(t3 * HERO3_FPS));
           heroImg = hero3ImgsRef.current[idx3];
-          // Natural foot-synced walk speed from right (72%) -> left (36%) over 5.4s (no dragging!)
-          const walkProgress = Math.max(0, Math.min(1, (t3 - 1.2) / 5.4));
+          // Slide ONLY while feet are stepping (1.0s -> 4.0s) so he never slides after stopping!
+          const walkProgress = Math.max(0, Math.min(1, (t3 - 1.0) / 3.0));
           const easeWalk =
             walkProgress < 0.5
               ? 2 * walkProgress * walkProgress
               : 1 - Math.pow(-2 * walkProgress + 2, 2) / 2;
-          heroCenterXRatio = 0.72 - easeWalk * 0.36; // 72% -> 36%
+          heroCenterXRatio = 0.72 - easeWalk * 0.34; // 72% -> 38%
           clipNum = 3;
         }
 
@@ -878,27 +862,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           }
         }
 
-        // 5. Speech bubbles on front layer (max 2, never overlapping)
-        const drawnPairs = new Set<string>();
-        const bubbleXs: number[] = [];
-        walkers.forEach((a) => {
-          if (drawnPairs.size >= 2) return;
-          if (a.state !== "chatting" || !a.chatPartnerId) return;
-          const pairKey = [a.def.id, a.chatPartnerId].sort().join("|");
-          if (drawnPairs.has(pairKey)) return;
-          const b = walkers.find((n) => n.def.id === a.chatPartnerId);
-          if (!b || b.state !== "chatting") return;
-
-          const midX = (a.x + b.x) * 0.5;
-          if (bubbleXs.some((bx) => Math.abs(bx - midX) < 260)) return;
-          drawnPairs.add(pairKey);
-          bubbleXs.push(midX);
-
-          const laneCfg = LANES[a.lane];
-          const gy = h * laneCfg.groundRatio;
-          const th = h * laneCfg.heightRatio;
-          drawSpeechBubble(fCtx, midX, gy - th - 14, now / 1000, a.activeLine || b.activeLine, w);
-        });
+        // 5. NPC speech bubbles disabled so Amr's story clouds own the stage cleanly
       }
 
       rafId = requestAnimationFrame(draw);
