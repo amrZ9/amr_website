@@ -36,17 +36,17 @@ const WORLD_BY_SPRITE = new Map<string, WorldNpcMeta>(
 );
 
 const HERO_FRAME_COUNT = 47;
-const HERO_FPS = 12;
+const HERO_FPS = 8; // Relaxed, confident stroll (~5.9s total)
 const HERO_FRAMES = Array.from(
   { length: HERO_FRAME_COUNT },
   (_, i) => `/footer/hero/frame-${String(i + 1).padStart(2, "0")}.webp`
 );
 
-/** 3 clear visual depth lanes softened slightly so Amr (100% crisp ink) owns the spotlight */
+/** 3 clear visual depth lanes — rich and legible while Amr (100% crisp ink) owns center stage */
 const LANES = [
-  { id: 0, z: 0.15, groundRatio: 0.63, heightRatio: 0.24, speedMult: 0.72, alpha: 0.48 }, // Far back
-  { id: 1, z: 0.50, groundRatio: 0.80, heightRatio: 0.34, speedMult: 0.92, alpha: 0.62 }, // Midground
-  { id: 2, z: 0.85, groundRatio: 0.96, heightRatio: 0.44, speedMult: 1.08, alpha: 0.74 }, // Foreground
+  { id: 0, z: 0.15, groundRatio: 0.63, heightRatio: 0.24, speedMult: 0.72, alpha: 0.68 }, // Far back
+  { id: 1, z: 0.50, groundRatio: 0.80, heightRatio: 0.34, speedMult: 0.92, alpha: 0.82 }, // Midground
+  { id: 2, z: 0.85, groundRatio: 0.96, heightRatio: 0.44, speedMult: 1.08, alpha: 0.92 }, // Foreground
 ] as const;
 
 interface LiveWalker {
@@ -278,12 +278,33 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
         const clampedX = Math.max(bw / 2 + 8, Math.min(maxWidth - bw / 2 - 8, cx));
 
         ctx.translate(clampedX, floatY);
+        // Subtle comic ink offset shadow
+        ctx.fillStyle = "#141414";
+        ctx.beginPath();
+        ctx.roundRect(-bw / 2 + 2, -bh / 2 + 2, bw, bh, 11);
+        ctx.fill();
+
+        // Main comic bubble body
         ctx.fillStyle = "#ffffff";
         ctx.strokeStyle = "#141414";
-        ctx.lineWidth = 1.3;
+        ctx.lineWidth = 1.6;
         ctx.beginPath();
-        ctx.roundRect(-bw / 2, -bh / 2, bw, bh, 12);
+        ctx.roundRect(-bw / 2, -bh / 2, bw, bh, 11);
         ctx.fill();
+        ctx.stroke();
+
+        // Comic pointer tail pointing down to speaker
+        ctx.beginPath();
+        ctx.moveTo(-5, bh / 2 - 1);
+        ctx.lineTo(0, bh / 2 + 7);
+        ctx.lineTo(6, bh / 2 - 1);
+        ctx.closePath();
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-5, bh / 2);
+        ctx.lineTo(0, bh / 2 + 7);
+        ctx.lineTo(6, bh / 2);
         ctx.stroke();
 
         ctx.fillStyle = "#141414";
@@ -561,25 +582,26 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
               );
         const heroImg = heroImgsRef.current[heroFrameIdx];
         if (heroImg && heroImg.complete && heroImg.naturalWidth) {
-          const targetH = Math.min(h * 0.94, 410);
+          const targetH = Math.min(h * 0.88, 390);
           const targetW = (heroImg.naturalWidth / heroImg.naturalHeight) * targetH;
+          const heroBottomOffset = 14; // Lift slightly so sneakers stay fully visible
           fCtx.save();
           fCtx.globalAlpha = 1;
           fCtx.drawImage(
             heroImg,
             w * 0.5 - targetW * 0.5,
-            h - targetH,
+            h - targetH - heroBottomOffset,
             targetW,
             targetH
           );
           fCtx.restore();
 
-          // Synced hero speech bubble during open-hand gesture (1.8s -> 3.5s)
-          if (heroTimeRef.current >= 1.8 && heroTimeRef.current <= Math.min(heroDuration, 3.6)) {
+          // Synced comic speech bubble during open-hand gesture (2.6s -> 5.3s at 8 FPS)
+          if (heroTimeRef.current >= 2.6 && heroTimeRef.current <= Math.min(heroDuration, 5.4)) {
             drawSpeechBubble(
               fCtx,
               w * 0.5,
-              h - targetH + 26,
+              h - targetH - heroBottomOffset + 18,
               now / 1000,
               "Hey — this is the world I build for.",
               w
