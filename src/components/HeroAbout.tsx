@@ -6,6 +6,7 @@ import { profile } from "@/data/profile";
 import { WaveText } from "./WaveText";
 import { OrbitalHeroCanvas } from "./OrbitalHeroCanvas";
 import { MetricsStrip } from "./MetricsStrip";
+import { trackEvent } from "@/lib/analytics";
 
 function buildCodePreview() {
   const varName =
@@ -456,7 +457,16 @@ export function HeroAbout() {
             {profile.bioLead.suffix}
           </p>
           <div className="bio-actions">
-            <a className="bio-projects wave-target" href="#projects">
+            <a
+              className="bio-projects wave-target"
+              href="#projects"
+              onClick={() =>
+                trackEvent("cta_click", {
+                  cta_name: "explore_projects",
+                  location: "biography",
+                })
+              }
+            >
               <WaveText text="Explore projects" />
               <ArrowUpRight size={20} aria-hidden="true" />
             </a>

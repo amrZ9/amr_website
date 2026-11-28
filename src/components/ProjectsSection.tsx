@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { ArrowUpRight, FolderOpen, X } from "lucide-react";
 import { profile, ProjectItem } from "@/data/profile";
 import { WaveText } from "./WaveText";
+import { trackEvent } from "@/lib/analytics";
 
 export function ProjectsSection() {
   const [activeId, setActiveId] = useState<string | null>(
@@ -73,7 +74,17 @@ export function ProjectsSection() {
               data-folder-id={project.id}
               data-ac-stagger="out"
               aria-expanded={isOpen}
-              onClick={() => setActiveId(isOpen ? null : project.id)}
+              onClick={() => {
+                const nextId = isOpen ? null : project.id;
+                setActiveId(nextId);
+                if (nextId) {
+                  trackEvent("project_open", {
+                    project_id: project.id,
+                    project_title: project.title,
+                    project_kind: project.kind,
+                  });
+                }
+              }}
               className={`project-folder ac-loupe${isOpen ? " is-open" : ""}`}
               style={
                 {
@@ -265,6 +276,13 @@ function ShowcaseView({ project }: { project: ProjectItem }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="wave-target"
+                onClick={() =>
+                  trackEvent("project_link_click", {
+                    project_id: project.id,
+                    link_label: link.label,
+                    link_url: link.href,
+                  })
+                }
               >
                 <WaveText text={link.label} />
                 <ArrowUpRight size={16} aria-hidden="true" />

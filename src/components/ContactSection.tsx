@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { ArrowUpRight, Check, Copy } from "lucide-react";
 import { profile } from "@/data/profile";
 import { WaveText } from "./WaveText";
+import { trackEvent } from "@/lib/analytics";
 
 export function ContactSection() {
   const [copied, setCopied] = useState(false);
@@ -15,6 +16,7 @@ export function ContactSection() {
     try {
       await navigator.clipboard.writeText(profile.email);
       setCopied(true);
+      trackEvent("email_copy", { location: "contact_section" });
       setTimeout(() => setCopied(false), 2500);
     } catch {
       setCopied(false);
@@ -23,6 +25,7 @@ export function ContactSection() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    trackEvent("contact_form_submit", { form_location: "contact_section" });
     const subject = encodeURIComponent(
       `Portfolio Inquiry from ${name || "Visitor"}`
     );
@@ -58,6 +61,9 @@ export function ContactSection() {
                 <a
                   className="email-link wave-target"
                   href={`mailto:${profile.email}`}
+                  onClick={() =>
+                    trackEvent("email_click", { location: "contact_section" })
+                  }
                 >
                   <WaveText text={profile.email} />
                   <ArrowUpRight size={20} aria-hidden="true" />
@@ -106,6 +112,12 @@ export function ContactSection() {
                   href={s.href}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() =>
+                    trackEvent("social_click", {
+                      platform: s.name,
+                      location: "contact_section",
+                    })
+                  }
                 >
                   <WaveText text={s.name} />
                 </a>

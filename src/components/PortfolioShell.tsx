@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import { Preloader } from "./Preloader";
 import { ScrollRuler } from "./ScrollRuler";
+import { trackEvent } from "@/lib/analytics";
 
 declare global {
   interface Window {
@@ -183,6 +184,36 @@ export function PortfolioShell({ children }: { children: React.ReactNode }) {
       if (scrollRaf) cancelAnimationFrame(scrollRaf);
       cleanups.forEach((fn) => fn());
     };
+  }, []);
+
+  // GA4 funnel: track each major chapter once when it enters the viewport
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const sectionIds = ["biography", "experience", "projects", "skills", "contact"];
+    const sections = sectionIds
+      .map((id) => root.querySelector<HTMLElement>(`#${id}`))
+      .filter((el): el is HTMLElement => el !== null);
+
+    if (sections.length === 0) return;
+
+    const seen = new Set<string>();
+    const sectionIo = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const id = (entry.target as HTMLElement).id;
+          if (!id || seen.has(id)) return;
+          seen.add(id);
+          trackEvent("section_view", { section_id: id });
+          sectionIo.unobserve(entry.target);
+        });
+      },
+      { threshold: 0.25 }
+    );
+
+    sections.forEach((el) => sectionIo.observe(el));
+    return () => sectionIo.disconnect();
   }, []);
 
   return (

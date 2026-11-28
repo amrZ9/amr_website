@@ -8,7 +8,8 @@ export default function PrivacyPage() {
       <h1>Privacy</h1>
       <p>
         This personal portfolio and biography website for {profile.fullName}{" "}
-        does not use tracking cookies or sell personal data.
+        uses Google Analytics 4 to understand aggregated traffic and site
+        interactions. It does not sell personal data.
       </p>
       <p>
         If you reach out via email ({profile.email}), your message is used
