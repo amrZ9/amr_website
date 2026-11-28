@@ -103,6 +103,7 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
   const heroTimeRef = useRef<number>(-1); // -1 = waiting to enter viewport
   const heroImgsRef = useRef<HTMLImageElement[]>([]);
   const hero2ImgsRef = useRef<HTMLImageElement[]>([]);
+  const lastValidHeroImgRef = useRef<HTMLImageElement | null>(null);
   const fullBodyImgRef = useRef<HTMLImageElement | null>(null);
 
   // Trigger Amr's walk-in entrance when footer scrolls into view
@@ -729,16 +730,23 @@ export function CrowdScene({ descId }: CrowdSceneProps) {
           heroCenterXRatio = 0.5 + easeWalk * 0.22;
         }
 
+        // Fallback to last decoded frame so a slow-loading frame NEVER causes a 1-frame blink
         if (heroImg && heroImg.complete && heroImg.naturalWidth) {
+          lastValidHeroImgRef.current = heroImg;
+        }
+        const renderHeroImg = lastValidHeroImgRef.current;
+
+        if (renderHeroImg && renderHeroImg.complete && renderHeroImg.naturalWidth) {
           const targetH = Math.min(h * 0.92, 410);
-          const targetW = (heroImg.naturalWidth / heroImg.naturalHeight) * targetH;
+          const targetW =
+            (renderHeroImg.naturalWidth / renderHeroImg.naturalHeight) * targetH;
           const heroBottomOffset = 6;
           const heroCenterX = w * heroCenterXRatio;
 
           fCtx.save();
           fCtx.globalAlpha = 1;
           fCtx.drawImage(
-            heroImg,
+            renderHeroImg,
             heroCenterX - targetW * 0.5,
             h - targetH - heroBottomOffset,
             targetW,
